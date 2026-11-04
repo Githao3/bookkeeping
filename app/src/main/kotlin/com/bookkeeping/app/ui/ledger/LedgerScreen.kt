@@ -1,8 +1,8 @@
 package com.bookkeeping.app.ui.ledger
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,8 +24,6 @@ import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -50,9 +48,9 @@ import com.bookkeeping.app.data.local.entity.TransactionType
 import com.bookkeeping.app.data.local.model.TransactionWithDetails
 import com.bookkeeping.app.ui.common.FormatHelper
 import com.bookkeeping.app.ui.common.IconHelper
+import com.bookkeeping.app.ui.theme.liquidGlass
 import java.util.Calendar
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun LedgerScreen(
     transactions: List<TransactionWithDetails>,
@@ -63,6 +61,7 @@ fun LedgerScreen(
     modifier: Modifier = Modifier
 ) {
     var transactionToDelete by remember { mutableStateOf<TransactionEntity?>(null) }
+    val isDark = isSystemInDarkTheme()
 
     // Aggregate monthly statistics
     val totalExpense = transactions
@@ -86,103 +85,138 @@ fun LedgerScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .padding(horizontal = 16.dp)
     ) {
-        // Month Summary Card
-        Card(
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Top Month Overview: Luxurious Liquid Glass Card
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer
-            )
+                .liquidGlass(
+                    shape = RoundedCornerShape(26.dp),
+                    elevation = 12.dp
+                )
+                .padding(20.dp)
         ) {
-            Column(
-                modifier = Modifier.padding(16.dp)
-            ) {
-                // Month Header with Selector
+            Column {
+                // Month Header with Glass Pills for Previous/Next
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    IconButton(onClick = onPreviousMonth) {
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .liquidGlass(shape = CircleShape, elevation = 2.dp)
+                            .clickable(onClick = onPreviousMonth),
+                        contentAlignment = Alignment.Center
+                    ) {
                         Icon(
                             Icons.Default.ChevronLeft,
                             contentDescription = "上月",
-                            tint = MaterialTheme.colorScheme.onPrimaryContainer
+                            tint = if (isDark) Color.White else Color(0xFF1F2937),
+                            modifier = Modifier.size(20.dp)
                         )
                     }
+
                     Text(
                         text = FormatHelper.formatMonth(currentMonthTimestamp),
-                        fontSize = 18.sp,
+                        fontSize = 19.sp,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                        color = if (isDark) Color.White else Color(0xFF111827)
                     )
-                    IconButton(onClick = onNextMonth) {
+
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .liquidGlass(shape = CircleShape, elevation = 2.dp)
+                            .clickable(onClick = onNextMonth),
+                        contentAlignment = Alignment.Center
+                    ) {
                         Icon(
                             Icons.Default.ChevronRight,
                             contentDescription = "下月",
-                            tint = MaterialTheme.colorScheme.onPrimaryContainer
+                            tint = if (isDark) Color.White else Color(0xFF1F2937),
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(18.dp))
 
-                // Stats 3 columns
+                // Stats: 3 Columns
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceAround
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    // Expense
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        horizontalAlignment = Alignment.Start
+                    ) {
                         Text(
                             text = "总支出",
                             fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                            fontWeight = FontWeight.Medium,
+                            color = if (isDark) Color(0xFF9CA3AF) else Color(0xFF6B7280)
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = FormatHelper.formatCurrency(totalExpense),
-                            fontSize = 18.sp,
+                            fontSize = 17.sp,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.error
+                            color = Color(0xFFEF4444) // Coral Red
                         )
                     }
 
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    // Income
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
                         Text(
                             text = "总收入",
                             fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                            fontWeight = FontWeight.Medium,
+                            color = if (isDark) Color(0xFF9CA3AF) else Color(0xFF6B7280)
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = FormatHelper.formatCurrency(totalIncome),
-                            fontSize = 18.sp,
+                            fontSize = 17.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF2E7D32)
+                            color = Color(0xFF10B981) // Emerald Green
                         )
                     }
 
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    // Balance
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        horizontalAlignment = Alignment.End
+                    ) {
                         Text(
                             text = "结余",
                             fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                            fontWeight = FontWeight.Medium,
+                            color = if (isDark) Color(0xFF9CA3AF) else Color(0xFF6B7280)
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = FormatHelper.formatCurrency(balance),
-                            fontSize = 18.sp,
+                            fontSize = 17.sp,
                             fontWeight = FontWeight.Bold,
-                            color = if (balance >= 0) Color(0xFF2E7D32) else MaterialTheme.colorScheme.error
+                            color = if (balance >= 0) {
+                                if (isDark) Color(0xFF38BDF8) else Color(0xFF0284C7)
+                            } else Color(0xFFEF4444)
                         )
                     }
                 }
             }
         }
+
+        Spacer(modifier = Modifier.height(14.dp))
 
         // Transactions List
         if (transactions.isEmpty()) {
@@ -192,24 +226,37 @@ fun LedgerScreen(
                     .weight(1f),
                 contentAlignment = Alignment.Center
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ReceiptLong,
-                        contentDescription = null,
-                        modifier = Modifier.size(64.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        text = "本月暂无账单明细",
-                        fontSize = 15.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = "点击底部 + 按钮记一笔吧",
-                        fontSize = 13.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                    )
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(0.85f)
+                        .liquidGlass(
+                            shape = RoundedCornerShape(24.dp),
+                            elevation = 6.dp
+                        )
+                        .padding(vertical = 36.dp, horizontal = 20.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ReceiptLong,
+                            contentDescription = null,
+                            modifier = Modifier.size(54.dp),
+                            tint = if (isDark) Color(0x66FFFFFF) else Color(0x44000000)
+                        )
+                        Spacer(modifier = Modifier.height(14.dp))
+                        Text(
+                            text = "本月暂无账单明细",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = if (isDark) Color.White else Color(0xFF1F2937)
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "轻触底部晶莹「+」按钮，记录第一笔吧",
+                            fontSize = 13.sp,
+                            color = if (isDark) Color(0xFF9CA3AF) else Color(0xFF6B7280)
+                        )
+                    }
                 }
             }
         } else {
@@ -217,7 +264,6 @@ fun LedgerScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .weight(1f)
-                    .padding(horizontal = 16.dp)
             ) {
                 grouped.forEach { (_, dayTransactions) ->
                     val firstTimestamp = dayTransactions.first().transaction.timestamp
@@ -233,30 +279,32 @@ fun LedgerScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 10.dp),
+                                .padding(vertical = 8.dp, horizontal = 4.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
                                 text = FormatHelper.formatDayHeader(firstTimestamp),
-                                fontSize = 13.sp,
+                                fontSize = 12.sp,
                                 fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = if (isDark) Color(0xFF9CA3AF) else Color(0xFF6B7280)
                             )
 
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 if (dayExpense > 0.0) {
                                     Text(
-                                        text = "支: ${FormatHelper.formatCurrency(dayExpense)}",
-                                        fontSize = 12.sp,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        text = "支 ${FormatHelper.formatCurrency(dayExpense)}",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = if (isDark) Color(0xFFD1D5DB) else Color(0xFF4B5563)
                                     )
                                 }
                                 if (dayIncome > 0.0) {
                                     Text(
-                                        text = "收: ${FormatHelper.formatCurrency(dayIncome)}",
-                                        fontSize = 12.sp,
-                                        color = Color(0xFF2E7D32)
+                                        text = "收 ${FormatHelper.formatCurrency(dayIncome)}",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = Color(0xFF10B981)
                                     )
                                 }
                             }
@@ -265,12 +313,17 @@ fun LedgerScreen(
 
                     // Transactions in this day
                     items(dayTransactions, key = { it.transaction.id }) { item ->
-                        TransactionItemCard(
+                        LiquidTransactionCard(
                             item = item,
                             onDelete = { transactionToDelete = item.transaction }
                         )
-                        Spacer(modifier = Modifier.height(6.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
                     }
+                }
+
+                // Bottom padding for floating navigation bar
+                item {
+                    Spacer(modifier = Modifier.height(88.dp))
                 }
             }
         }
@@ -305,7 +358,7 @@ fun LedgerScreen(
 }
 
 @Composable
-fun TransactionItemCard(
+fun LiquidTransactionCard(
     item: TransactionWithDetails,
     onDelete: () -> Unit,
     modifier: Modifier = Modifier
@@ -314,24 +367,23 @@ fun TransactionItemCard(
     val category = item.category
     val sourceAccount = item.sourceAccount
     val targetAccount = item.targetAccount
+    val isDark = isSystemInDarkTheme()
 
-    Card(
+    Box(
         modifier = modifier
             .fillMaxWidth()
-            .clickable { onDelete() },
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+            .liquidGlass(
+                shape = RoundedCornerShape(18.dp),
+                elevation = 4.dp
+            )
+            .clickable(onClick = onDelete)
+            .padding(14.dp)
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Icon
+            // Category Icon in Frosted Glow Circle
             val (icon, bgCol) = when (tx.type) {
                 TransactionType.EXPENSE -> {
                     val color = category?.let { Color(it.colorHex) } ?: Color(0xFFFF7043)
@@ -340,34 +392,34 @@ fun TransactionItemCard(
                     ic to color
                 }
                 TransactionType.INCOME -> {
-                    val color = category?.let { Color(it.colorHex) } ?: Color(0xFF4CAF50)
+                    val color = category?.let { Color(it.colorHex) } ?: Color(0xFF10B981)
                     val ic = category?.let { IconHelper.getCategoryIcon(it.iconName) }
                         ?: IconHelper.getCategoryIcon("Work")
                     ic to color
                 }
                 TransactionType.TRANSFER -> {
-                    IconHelper.getCategoryIcon("Transfer") to Color(0xFF1976D2)
+                    IconHelper.getCategoryIcon("Transfer") to Color(0xFF3B82F6)
                 }
             }
 
             Box(
                 modifier = Modifier
-                    .size(42.dp)
+                    .size(44.dp)
                     .clip(CircleShape)
-                    .background(bgCol.copy(alpha = 0.15f)),
+                    .background(bgCol.copy(alpha = 0.18f)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
                     tint = bgCol,
-                    modifier = Modifier.size(22.dp)
+                    modifier = Modifier.size(24.dp)
                 )
             }
 
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(14.dp))
 
-            // Title & Info
+            // Details
             Column(modifier = Modifier.weight(1f)) {
                 val title = when (tx.type) {
                     TransactionType.EXPENSE, TransactionType.INCOME -> category?.name ?: "未分类"
@@ -377,26 +429,29 @@ fun TransactionItemCard(
                     text = title,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = if (isDark) Color.White else Color(0xFF111827)
                 )
 
-                Spacer(modifier = Modifier.height(2.dp))
+                Spacer(modifier = Modifier.height(4.dp))
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    // Account Tag
                     val accountDesc = when (tx.type) {
                         TransactionType.EXPENSE, TransactionType.INCOME -> sourceAccount?.name ?: "账户"
                         TransactionType.TRANSFER -> "${sourceAccount?.name} ➔ ${targetAccount?.name}"
                     }
-                    Surface(
-                        shape = RoundedCornerShape(4.dp),
-                        color = MaterialTheme.colorScheme.surfaceVariant
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(
+                                if (isDark) Color(0x33FFFFFF) else Color(0x1A000000)
+                            )
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
                     ) {
                         Text(
                             text = accountDesc,
                             fontSize = 10.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                            fontWeight = FontWeight.Medium,
+                            color = if (isDark) Color(0xFFD1D5DB) else Color(0xFF4B5563)
                         )
                     }
 
@@ -405,7 +460,7 @@ fun TransactionItemCard(
                         Text(
                             text = tx.note,
                             fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = if (isDark) Color(0xFF9CA3AF) else Color(0xFF6B7280),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
@@ -416,13 +471,13 @@ fun TransactionItemCard(
             // Amount & Time
             Column(horizontalAlignment = Alignment.End) {
                 val (prefix, amountCol) = when (tx.type) {
-                    TransactionType.EXPENSE -> "-" to MaterialTheme.colorScheme.onSurface
-                    TransactionType.INCOME -> "+" to Color(0xFF2E7D32)
-                    TransactionType.TRANSFER -> "" to Color(0xFF1976D2)
+                    TransactionType.EXPENSE -> "-" to if (isDark) Color(0xFFF87171) else Color(0xFFEF4444)
+                    TransactionType.INCOME -> "+" to Color(0xFF10B981)
+                    TransactionType.TRANSFER -> "" to Color(0xFF3B82F6)
                 }
                 Text(
                     text = "$prefix${FormatHelper.formatCurrency(tx.amount)}",
-                    fontSize = 16.sp,
+                    fontSize = 17.sp,
                     fontWeight = FontWeight.Bold,
                     color = amountCol
                 )
@@ -430,7 +485,7 @@ fun TransactionItemCard(
                 Text(
                     text = FormatHelper.formatTime(tx.timestamp),
                     fontSize = 11.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                    color = if (isDark) Color(0xFF6B7280) else Color(0xFF9CA3AF)
                 )
             }
         }

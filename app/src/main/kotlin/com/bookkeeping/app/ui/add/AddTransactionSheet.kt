@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,13 +29,9 @@ import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
@@ -57,9 +54,9 @@ import com.bookkeeping.app.data.local.entity.AccountEntity
 import com.bookkeeping.app.data.local.entity.CategoryEntity
 import com.bookkeeping.app.data.local.entity.TransactionEntity
 import com.bookkeeping.app.data.local.entity.TransactionType
-import com.bookkeeping.app.ui.common.FormatHelper
 import com.bookkeeping.app.ui.common.IconHelper
 import com.bookkeeping.app.ui.components.NumberPad
+import com.bookkeeping.app.ui.theme.liquidGlass
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -76,6 +73,8 @@ fun AddTransactionContent(
 ) {
     var selectedType by remember { mutableStateOf(TransactionType.EXPENSE) }
     var amountString by remember { mutableStateOf("0") }
+    val isDark = isSystemInDarkTheme()
+
     var selectedCategoryId by remember(selectedType, expenseCategories, incomeCategories) {
         mutableStateOf(
             if (selectedType == TransactionType.EXPENSE) {
@@ -168,53 +167,86 @@ fun AddTransactionContent(
         modifier = modifier
             .fillMaxWidth()
             .verticalScroll(rememberScrollState())
-            .padding(bottom = 16.dp)
+            .padding(bottom = 20.dp)
     ) {
-        // Header with Close and Type Tabs
+        // Header with Close and Liquid Pill Tabs
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 4.dp),
+                .padding(horizontal = 12.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = onDismiss) {
-                Icon(Icons.Default.Close, contentDescription = "取消")
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .liquidGlass(shape = CircleShape, elevation = 2.dp)
+                    .clickable(onClick = onDismiss),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    Icons.Default.Close,
+                    contentDescription = "关闭",
+                    modifier = Modifier.size(20.dp),
+                    tint = if (isDark) Color.White else Color(0xFF1F2937)
+                )
             }
-            TabRow(
-                selectedTabIndex = selectedType.ordinal,
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            // Liquid Segmented Switcher
+            Row(
                 modifier = Modifier
                     .weight(1f)
-                    .clip(RoundedCornerShape(24.dp))
+                    .liquidGlass(shape = CircleShape, elevation = 4.dp)
+                    .padding(3.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Tab(
-                    selected = selectedType == TransactionType.EXPENSE,
-                    onClick = { selectedType = TransactionType.EXPENSE },
-                    text = { Text("支出") }
-                )
-                Tab(
-                    selected = selectedType == TransactionType.INCOME,
-                    onClick = { selectedType = TransactionType.INCOME },
-                    text = { Text("收入") }
-                )
-                Tab(
-                    selected = selectedType == TransactionType.TRANSFER,
-                    onClick = { selectedType = TransactionType.TRANSFER },
-                    text = { Text("转账") }
-                )
+                listOf(
+                    TransactionType.EXPENSE to "支出",
+                    TransactionType.INCOME to "收入",
+                    TransactionType.TRANSFER to "转账"
+                ).forEach { (type, label) ->
+                    val isSelected = selectedType == type
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(CircleShape)
+                            .background(
+                                if (isSelected) {
+                                    if (isDark) Color(0x333B82F6) else Color(0x1F2563EB)
+                                } else Color.Transparent
+                            )
+                            .clickable { selectedType = type }
+                            .padding(vertical = 8.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = label,
+                            fontSize = 13.sp,
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                            color = if (isSelected) {
+                                if (isDark) Color(0xFF60A5FA) else Color(0xFF2563EB)
+                            } else {
+                                if (isDark) Color(0xFF9CA3AF) else Color(0xFF6B7280)
+                            }
+                        )
+                    }
+                }
             }
+
             Spacer(modifier = Modifier.width(48.dp))
         }
 
-        // Amount Display Card
+        // Amount Display: Liquid Glass Card
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 8.dp)
-                .background(
-                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                    RoundedCornerShape(16.dp)
+                .liquidGlass(
+                    shape = RoundedCornerShape(22.dp),
+                    elevation = 6.dp
                 )
-                .padding(vertical = 16.dp, horizontal = 20.dp),
+                .padding(vertical = 14.dp, horizontal = 20.dp),
             contentAlignment = Alignment.CenterEnd
         ) {
             Row(
@@ -225,14 +257,14 @@ fun AddTransactionContent(
                     text = "¥",
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(bottom = 4.dp, end = 6.dp)
+                    color = if (isDark) Color(0xFF60A5FA) else Color(0xFF2563EB),
+                    modifier = Modifier.padding(bottom = 6.dp, end = 6.dp)
                 )
                 Text(
                     text = amountString,
                     fontSize = 38.sp,
                     fontWeight = FontWeight.ExtraBold,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = if (isDark) Color.White else Color(0xFF111827),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -246,14 +278,15 @@ fun AddTransactionContent(
             Text(
                 text = "选择分类",
                 fontSize = 13.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                fontWeight = FontWeight.Medium,
+                color = if (isDark) Color(0xFF9CA3AF) else Color(0xFF6B7280),
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp)
             )
 
             FlowRow(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 12.dp),
+                    .padding(horizontal = 14.dp),
                 maxItemsInEachRow = 5,
                 horizontalArrangement = Arrangement.SpaceAround
             ) {
@@ -261,10 +294,10 @@ fun AddTransactionContent(
                     val isSelected = cat.id == selectedCategoryId
                     Column(
                         modifier = Modifier
-                            .padding(vertical = 8.dp, horizontal = 4.dp)
+                            .padding(vertical = 6.dp, horizontal = 3.dp)
                             .clip(RoundedCornerShape(12.dp))
                             .clickable { selectedCategoryId = cat.id }
-                            .padding(horizontal = 6.dp, vertical = 4.dp),
+                            .padding(horizontal = 4.dp, vertical = 4.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Box(
@@ -273,10 +306,11 @@ fun AddTransactionContent(
                                 .clip(CircleShape)
                                 .background(
                                     if (isSelected) Color(cat.colorHex)
-                                    else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
+                                    else if (isDark) Color(0x33FFFFFF)
+                                    else Color(0x1F000000)
                                 )
                                 .then(
-                                    if (isSelected) Modifier.border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)
+                                    if (isSelected) Modifier.border(2.dp, Color.White, CircleShape)
                                     else Modifier
                                 ),
                             contentAlignment = Alignment.Center
@@ -284,7 +318,7 @@ fun AddTransactionContent(
                             Icon(
                                 imageVector = IconHelper.getCategoryIcon(cat.iconName),
                                 contentDescription = cat.name,
-                                tint = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
+                                tint = if (isSelected) Color.White else Color(cat.colorHex),
                                 modifier = Modifier.size(24.dp)
                             )
                         }
@@ -293,7 +327,11 @@ fun AddTransactionContent(
                             text = cat.name,
                             fontSize = 11.sp,
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                            color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                            color = if (isSelected) {
+                                if (isDark) Color.White else Color(0xFF111827)
+                            } else {
+                                if (isDark) Color(0xFF9CA3AF) else Color(0xFF6B7280)
+                            },
                             textAlign = TextAlign.Center
                         )
                     }
@@ -306,8 +344,8 @@ fun AddTransactionContent(
             if (selectedType == TransactionType.TRANSFER) {
                 Text(
                     text = "转出账户",
-                    fontSize = 13.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    fontSize = 12.sp,
+                    color = if (isDark) Color(0xFF9CA3AF) else Color(0xFF6B7280)
                 )
                 Row(
                     modifier = Modifier
@@ -319,7 +357,7 @@ fun AddTransactionContent(
                         FilterChip(
                             selected = account.id == selectedSourceAccountId,
                             onClick = { selectedSourceAccountId = account.id },
-                            label = { Text(account.name) },
+                            label = { Text(account.name, fontSize = 12.sp) },
                             leadingIcon = {
                                 Icon(
                                     imageVector = IconHelper.getAccountIcon(account.iconName),
@@ -334,8 +372,8 @@ fun AddTransactionContent(
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
                     text = "转入账户",
-                    fontSize = 13.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    fontSize = 12.sp,
+                    color = if (isDark) Color(0xFF9CA3AF) else Color(0xFF6B7280)
                 )
                 Row(
                     modifier = Modifier
@@ -347,7 +385,7 @@ fun AddTransactionContent(
                         FilterChip(
                             selected = account.id == selectedTargetAccountId,
                             onClick = { selectedTargetAccountId = account.id },
-                            label = { Text(account.name) },
+                            label = { Text(account.name, fontSize = 12.sp) },
                             leadingIcon = {
                                 Icon(
                                     imageVector = IconHelper.getAccountIcon(account.iconName),
@@ -360,9 +398,9 @@ fun AddTransactionContent(
                 }
             } else {
                 Text(
-                    text = "账户",
-                    fontSize = 13.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    text = "支付账户",
+                    fontSize = 12.sp,
+                    color = if (isDark) Color(0xFF9CA3AF) else Color(0xFF6B7280)
                 )
                 Row(
                     modifier = Modifier
@@ -374,7 +412,7 @@ fun AddTransactionContent(
                         FilterChip(
                             selected = account.id == selectedSourceAccountId,
                             onClick = { selectedSourceAccountId = account.id },
-                            label = { Text(account.name) },
+                            label = { Text(account.name, fontSize = 12.sp) },
                             leadingIcon = {
                                 Icon(
                                     imageVector = IconHelper.getAccountIcon(account.iconName),
@@ -401,14 +439,15 @@ fun AddTransactionContent(
                 onClick = { showDatePicker = true },
                 label = {
                     Text(
-                        SimpleDateFormat("yyyy-MM-dd", Locale.CHINA).format(Date(selectedTimestamp))
+                        SimpleDateFormat("yyyy-MM-dd", Locale.CHINA).format(Date(selectedTimestamp)),
+                        fontSize = 12.sp
                     )
                 },
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Default.CalendarToday,
                         contentDescription = "选择日期",
-                        modifier = Modifier.size(16.dp)
+                        modifier = Modifier.size(15.dp)
                     )
                 }
             )
@@ -416,18 +455,20 @@ fun AddTransactionContent(
             OutlinedTextField(
                 value = note,
                 onValueChange = { note = it },
-                placeholder = { Text("添加备注...", fontSize = 13.sp) },
+                placeholder = { Text("添加备注...", fontSize = 12.sp) },
                 singleLine = true,
                 modifier = Modifier.weight(1f),
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Default.EditNote,
                         contentDescription = "备注",
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(18.dp)
                     )
                 }
             )
         }
+
+        Spacer(modifier = Modifier.height(4.dp))
 
         // Number Pad
         NumberPad(

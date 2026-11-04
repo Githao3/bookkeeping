@@ -1,6 +1,8 @@
 package com.bookkeeping.app.ui.stats
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,13 +18,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -42,6 +39,7 @@ import com.bookkeeping.app.ui.common.FormatHelper
 import com.bookkeeping.app.ui.common.IconHelper
 import com.bookkeeping.app.ui.components.ChartSlice
 import com.bookkeeping.app.ui.components.DonutChart
+import com.bookkeeping.app.ui.theme.liquidGlass
 
 data class CategoryStatItem(
     val categoryId: Long,
@@ -59,6 +57,7 @@ fun StatsScreen(
     modifier: Modifier = Modifier
 ) {
     var selectedType by remember { mutableStateOf(TransactionType.EXPENSE) }
+    val isDark = isSystemInDarkTheme()
 
     val filtered = remember(transactions, selectedType) {
         transactions.filter { it.transaction.type == selectedType }
@@ -68,7 +67,6 @@ fun StatsScreen(
         filtered.sumOf { it.transaction.amount }
     }
 
-    // Group by category and sort by amount descending
     val categoryStats = remember(filtered, totalAmount) {
         val groups = filtered.groupBy { it.category?.id ?: -1L }
         groups.map { (catId, txList) ->
@@ -103,67 +101,96 @@ fun StatsScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .padding(horizontal = 16.dp)
     ) {
-        // Tab Row: 支出 vs 收入
-        TabRow(
-            selectedTabIndex = if (selectedType == TransactionType.EXPENSE) 0 else 1,
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Liquid Segmented Pill Switcher
+        Row(
             modifier = Modifier
-                .padding(horizontal = 16.dp, vertical = 8.dp)
-                .clip(RoundedCornerShape(20.dp))
+                .fillMaxWidth()
+                .liquidGlass(shape = CircleShape, elevation = 6.dp)
+                .padding(4.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Tab(
-                selected = selectedType == TransactionType.EXPENSE,
-                onClick = { selectedType = TransactionType.EXPENSE },
-                text = { Text("支出统计") }
-            )
-            Tab(
-                selected = selectedType == TransactionType.INCOME,
-                onClick = { selectedType = TransactionType.INCOME },
-                text = { Text("收入统计") }
-            )
+            val isExpense = selectedType == TransactionType.EXPENSE
+            // Expense Tab
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(CircleShape)
+                    .background(
+                        if (isExpense) {
+                            if (isDark) Color(0x33EF4444) else Color(0x22EF4444)
+                        } else Color.Transparent
+                    )
+                    .clickable { selectedType = TransactionType.EXPENSE }
+                    .padding(vertical = 10.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "支出统计",
+                    fontSize = 14.sp,
+                    fontWeight = if (isExpense) FontWeight.Bold else FontWeight.Medium,
+                    color = if (isExpense) Color(0xFFEF4444) else if (isDark) Color(0xFF9CA3AF) else Color(0xFF6B7280)
+                )
+            }
+
+            // Income Tab
+            val isIncome = selectedType == TransactionType.INCOME
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(CircleShape)
+                    .background(
+                        if (isIncome) {
+                            if (isDark) Color(0x3310B981) else Color(0x2210B981)
+                        } else Color.Transparent
+                    )
+                    .clickable { selectedType = TransactionType.INCOME }
+                    .padding(vertical = 10.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "收入统计",
+                    fontSize = 14.sp,
+                    fontWeight = if (isIncome) FontWeight.Bold else FontWeight.Medium,
+                    color = if (isIncome) Color(0xFF10B981) else if (isDark) Color(0xFF9CA3AF) else Color(0xFF6B7280)
+                )
+            }
         }
 
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp)
-        ) {
-            // Chart Section Card
+        Spacer(modifier = Modifier.height(14.dp))
+
+        LazyColumn(modifier = Modifier.fillMaxSize()) {
+            // Chart Liquid Card
             item {
-                Card(
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 8.dp),
-                    shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surface
-                    ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(20.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        DonutChart(
-                            slices = chartSlices,
-                            totalAmount = totalAmount,
-                            centerTitle = if (selectedType == TransactionType.EXPENSE) "总支出" else "总收入"
+                        .liquidGlass(
+                            shape = RoundedCornerShape(26.dp),
+                            elevation = 10.dp
                         )
-                    }
+                        .padding(24.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    DonutChart(
+                        slices = chartSlices,
+                        totalAmount = totalAmount,
+                        centerTitle = if (selectedType == TransactionType.EXPENSE) "总支出" else "总收入"
+                    )
                 }
             }
 
-            // Category Ranking Header
+            // Section Title
             item {
                 Text(
                     text = if (selectedType == TransactionType.EXPENSE) "支出排行榜" else "收入排行榜",
-                    fontSize = 15.sp,
+                    fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
+                    color = if (isDark) Color.White else Color(0xFF111827),
+                    modifier = Modifier.padding(top = 20.dp, bottom = 10.dp, start = 4.dp)
                 )
             }
 
@@ -172,47 +199,49 @@ fun StatsScreen(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .liquidGlass(shape = RoundedCornerShape(20.dp), elevation = 4.dp)
                             .padding(vertical = 32.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = "暂无相关统计数据",
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = if (isDark) Color(0xFF9CA3AF) else Color(0xFF6B7280)
                         )
                     }
                 }
             } else {
                 items(categoryStats, key = { it.categoryId }) { stat ->
-                    Card(
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 4.dp),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surface
-                        )
+                            .padding(vertical = 5.dp)
+                            .liquidGlass(
+                                shape = RoundedCornerShape(18.dp),
+                                elevation = 4.dp
+                            )
+                            .padding(14.dp)
                     ) {
-                        Column(modifier = Modifier.padding(12.dp)) {
+                        Column {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Box(
                                     modifier = Modifier
-                                        .size(36.dp)
+                                        .size(38.dp)
                                         .clip(CircleShape)
-                                        .background(stat.color.copy(alpha = 0.15f)),
+                                        .background(stat.color.copy(alpha = 0.18f)),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
                                         imageVector = IconHelper.getCategoryIcon(stat.iconName),
                                         contentDescription = null,
                                         tint = stat.color,
-                                        modifier = Modifier.size(20.dp)
+                                        modifier = Modifier.size(22.dp)
                                     )
                                 }
 
-                                Spacer(modifier = Modifier.width(10.dp))
+                                Spacer(modifier = Modifier.width(12.dp))
 
                                 Column(modifier = Modifier.weight(1f)) {
                                     Row(
@@ -221,15 +250,15 @@ fun StatsScreen(
                                     ) {
                                         Text(
                                             text = stat.name,
-                                            fontSize = 14.sp,
+                                            fontSize = 15.sp,
                                             fontWeight = FontWeight.SemiBold,
-                                            color = MaterialTheme.colorScheme.onSurface
+                                            color = if (isDark) Color.White else Color(0xFF111827)
                                         )
                                         Text(
                                             text = FormatHelper.formatCurrency(stat.totalAmount),
-                                            fontSize = 14.sp,
+                                            fontSize = 15.sp,
                                             fontWeight = FontWeight.Bold,
-                                            color = MaterialTheme.colorScheme.onSurface
+                                            color = if (isDark) Color.White else Color(0xFF111827)
                                         )
                                     }
 
@@ -240,21 +269,21 @@ fun StatsScreen(
                                         horizontalArrangement = Arrangement.SpaceBetween
                                     ) {
                                         Text(
-                                            text = "${stat.count} 笔",
+                                            text = "${stat.count} 笔交易",
                                             fontSize = 11.sp,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            color = if (isDark) Color(0xFF9CA3AF) else Color(0xFF6B7280)
                                         )
                                         Text(
                                             text = "${(stat.percentage * 100).toInt()}%",
                                             fontSize = 11.sp,
-                                            fontWeight = FontWeight.Medium,
+                                            fontWeight = FontWeight.Bold,
                                             color = stat.color
                                         )
                                     }
                                 }
                             }
 
-                            Spacer(modifier = Modifier.height(8.dp))
+                            Spacer(modifier = Modifier.height(10.dp))
 
                             LinearProgressIndicator(
                                 progress = { stat.percentage },
@@ -263,11 +292,16 @@ fun StatsScreen(
                                     .height(6.dp)
                                     .clip(RoundedCornerShape(3.dp)),
                                 color = stat.color,
-                                trackColor = MaterialTheme.colorScheme.surfaceVariant
+                                trackColor = if (isDark) Color(0x33FFFFFF) else Color(0x1F000000)
                             )
                         }
                     }
                 }
+            }
+
+            // Bottom padding for floating navigation bar
+            item {
+                Spacer(modifier = Modifier.height(88.dp))
             }
         }
     }

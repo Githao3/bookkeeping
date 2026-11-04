@@ -1,22 +1,11 @@
 package com.bookkeeping.app.ui.main
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.automirrored.filled.ReceiptLong
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountBalanceWallet
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.PieChart
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -24,6 +13,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -32,8 +22,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bookkeeping.app.BookkeepingApplication
 import com.bookkeeping.app.ui.account.AccountScreen
 import com.bookkeeping.app.ui.add.AddTransactionContent
+import com.bookkeeping.app.ui.components.LiquidBottomBar
 import com.bookkeeping.app.ui.ledger.LedgerScreen
 import com.bookkeeping.app.ui.stats.StatsScreen
+import com.bookkeeping.app.ui.theme.AmbientAtmosphereBackground
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -57,84 +49,37 @@ fun MainScreen(
     val incomeCategories by viewModel.incomeCategories.collectAsStateWithLifecycle()
     val currentMonthTimestamp by viewModel.currentMonthTimestamp.collectAsStateWithLifecycle()
 
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-        bottomBar = {
-            NavigationBar(
-                containerColor = MaterialTheme.colorScheme.surface
-            ) {
-                NavigationBarItem(
-                    selected = currentTab == 0,
-                    onClick = { currentTab = 0 },
-                    icon = {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ReceiptLong,
-                            contentDescription = "明细",
-                            modifier = Modifier.size(24.dp)
-                        )
-                    },
-                    label = { Text("明细") }
+    AmbientAtmosphereBackground(modifier = modifier.fillMaxSize()) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .statusBarsPadding()
+        ) {
+            // Main content depending on active tab
+            when (currentTab) {
+                0 -> LedgerScreen(
+                    transactions = monthlyTransactions,
+                    currentMonthTimestamp = currentMonthTimestamp,
+                    onPreviousMonth = { viewModel.previousMonth() },
+                    onNextMonth = { viewModel.nextMonth() },
+                    onDeleteTransaction = { viewModel.deleteTransaction(it) }
                 )
-
-                NavigationBarItem(
-                    selected = currentTab == 1,
-                    onClick = { currentTab = 1 },
-                    icon = {
-                        Icon(
-                            Icons.Default.PieChart,
-                            contentDescription = "统计",
-                            modifier = Modifier.size(24.dp)
-                        )
-                    },
-                    label = { Text("统计") }
+                1 -> StatsScreen(
+                    transactions = allTransactions
                 )
-
-                NavigationBarItem(
-                    selected = currentTab == 2,
-                    onClick = { currentTab = 2 },
-                    icon = {
-                        Icon(
-                            Icons.Default.AccountBalanceWallet,
-                            contentDescription = "资产",
-                            modifier = Modifier.size(24.dp)
-                        )
-                    },
-                    label = { Text("资产") }
+                2 -> AccountScreen(
+                    accounts = accounts,
+                    onAddAccount = { viewModel.addAccount(it) },
+                    onDeleteAccount = { viewModel.deleteAccount(it) }
                 )
             }
-        },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = { showAddSheet = true },
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = "记一笔",
-                    modifier = Modifier.size(28.dp)
-                )
-            }
-        }
-    ) { innerPadding ->
-        when (currentTab) {
-            0 -> LedgerScreen(
-                transactions = monthlyTransactions,
-                currentMonthTimestamp = currentMonthTimestamp,
-                onPreviousMonth = { viewModel.previousMonth() },
-                onNextMonth = { viewModel.nextMonth() },
-                onDeleteTransaction = { viewModel.deleteTransaction(it) },
-                modifier = Modifier.padding(innerPadding)
-            )
-            1 -> StatsScreen(
-                transactions = allTransactions,
-                modifier = Modifier.padding(innerPadding)
-            )
-            2 -> AccountScreen(
-                accounts = accounts,
-                onAddAccount = { viewModel.addAccount(it) },
-                onDeleteAccount = { viewModel.deleteAccount(it) },
-                modifier = Modifier.padding(innerPadding)
+
+            // Floating Liquid Glass Navigation Bar (Aligned to Bottom Center)
+            LiquidBottomBar(
+                currentTab = currentTab,
+                onTabSelected = { currentTab = it },
+                onAddClick = { showAddSheet = true },
+                modifier = Modifier.align(Alignment.BottomCenter)
             )
         }
     }

@@ -1,7 +1,9 @@
 package com.bookkeeping.app.ui.account
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,14 +23,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -47,6 +45,7 @@ import com.bookkeeping.app.data.local.entity.AccountEntity
 import com.bookkeeping.app.data.local.entity.AccountType
 import com.bookkeeping.app.ui.common.FormatHelper
 import com.bookkeeping.app.ui.common.IconHelper
+import com.bookkeeping.app.ui.theme.liquidGlass
 
 @Composable
 fun AccountScreen(
@@ -57,6 +56,7 @@ fun AccountScreen(
 ) {
     var showAddDialog by remember { mutableStateOf(false) }
     var accountToDelete by remember { mutableStateOf<AccountEntity?>(null) }
+    val isDark = isSystemInDarkTheme()
 
     val totalNetAssets = remember(accounts) {
         accounts.filter { it.isIncludedInTotal }.sumOf { it.balance }
@@ -65,104 +65,114 @@ fun AccountScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .padding(horizontal = 16.dp)
     ) {
-        // Net Assets Header Card
-        Card(
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Net Assets Header: Liquid Glass Card
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant
-            ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                .liquidGlass(
+                    shape = RoundedCornerShape(26.dp),
+                    elevation = 12.dp
+                )
+                .padding(24.dp)
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(20.dp)
-            ) {
+            Column {
                 Text(
                     text = "净资产 (元)",
                     fontSize = 13.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    fontWeight = FontWeight.Medium,
+                    color = if (isDark) Color(0xFF9CA3AF) else Color(0xFF6B7280)
                 )
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
                     text = FormatHelper.formatCurrency(totalNetAssets),
                     fontSize = 32.sp,
                     fontWeight = FontWeight.ExtraBold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = if (isDark) Color.White else Color(0xFF111827)
                 )
                 Spacer(modifier = Modifier.height(10.dp))
                 Text(
                     text = "共计 ${accounts.size} 个账户参与统计",
                     fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+                    color = if (isDark) Color(0xFF6B7280) else Color(0xFF9CA3AF)
                 )
             }
         }
 
-        // Section Title & Add Button
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Section Title & Add Account Glass Button
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
+                .padding(horizontal = 4.dp, vertical = 4.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "账户列表",
-                fontSize = 16.sp,
+                text = "资产账户",
+                fontSize = 17.sp,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
+                color = if (isDark) Color.White else Color(0xFF111827)
             )
 
-            Button(
-                onClick = { showAddDialog = true },
-                shape = RoundedCornerShape(20.dp)
+            // Liquid Glass Add Button
+            Box(
+                modifier = Modifier
+                    .liquidGlass(shape = CircleShape, elevation = 4.dp)
+                    .clickable { showAddDialog = true }
+                    .padding(horizontal = 14.dp, vertical = 8.dp),
+                contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = "添加账户",
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text("添加账户", fontSize = 13.sp)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "添加账户",
+                        tint = if (isDark) Color(0xFF60A5FA) else Color(0xFF2563EB),
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "添加账户",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = if (isDark) Color(0xFF60A5FA) else Color(0xFF2563EB)
+                    )
+                }
             }
         }
 
+        Spacer(modifier = Modifier.height(8.dp))
+
         // Accounts List
         LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp),
+            modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(accounts, key = { it.id }) { account ->
-                Card(
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { accountToDelete = account },
-                    shape = RoundedCornerShape(14.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surface
-                    ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                        .liquidGlass(
+                            shape = RoundedCornerShape(18.dp),
+                            elevation = 4.dp
+                        )
+                        .clickable { accountToDelete = account }
+                        .padding(16.dp)
                 ) {
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(14.dp),
+                        modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         val iconColor = Color(account.colorHex)
                         Box(
                             modifier = Modifier
-                                .size(44.dp)
+                                .size(46.dp)
                                 .clip(CircleShape)
-                                .background(iconColor.copy(alpha = 0.15f)),
+                                .background(iconColor.copy(alpha = 0.18f)),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
@@ -178,14 +188,18 @@ fun AccountScreen(
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = account.name,
-                                fontSize = 15.sp,
+                                fontSize = 16.sp,
                                 fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.onSurface
+                                color = if (isDark) Color.White else Color(0xFF111827)
                             )
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Surface(
-                                shape = RoundedCornerShape(4.dp),
-                                color = MaterialTheme.colorScheme.surfaceVariant
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(
+                                        if (isDark) Color(0x33FFFFFF) else Color(0x1A000000)
+                                    )
+                                    .padding(horizontal = 6.dp, vertical = 2.dp)
                             ) {
                                 Text(
                                     text = when (account.type) {
@@ -197,20 +211,25 @@ fun AccountScreen(
                                         AccountType.OTHER -> "其它"
                                     },
                                     fontSize = 10.sp,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                    fontWeight = FontWeight.Medium,
+                                    color = if (isDark) Color(0xFFD1D5DB) else Color(0xFF4B5563)
                                 )
                             }
                         }
 
                         Text(
                             text = FormatHelper.formatCurrency(account.balance),
-                            fontSize = 17.sp,
+                            fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
+                            color = if (isDark) Color.White else Color(0xFF111827)
                         )
                     }
                 }
+            }
+
+            // Bottom padding for floating navigation bar
+            item {
+                Spacer(modifier = Modifier.height(88.dp))
             }
         }
     }
@@ -223,7 +242,7 @@ fun AccountScreen(
 
         AlertDialog(
             onDismissRequest = { showAddDialog = false },
-            title = { Text("新增账户") },
+            title = { Text("新增资产账户") },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     OutlinedTextField(
