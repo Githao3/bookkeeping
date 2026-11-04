@@ -12,9 +12,13 @@
 1. **严禁凭空臆造，求真务实（No Hallucination - Search & Verify First）**：
    * 严禁臆造不存在的 API、类库版本号、Gradle 配置项或系统行为。
    * 遇到不确定的版本兼容性（如 Kotlin 2.x 与 KSP/Room 对应版本）、Android 最新平台特性变更、废弃 API 替代方案等，**必须优先通过网络搜索或执行命令核查验证真实性**，确保事实与代码 100% 准确。
-2. **借鉴先行，调研成熟实现（Search & Learn Before Building）**：
-   * 在构思或实现具体功能（例如复杂图表绘制、记账动效交互、数字键盘计算逻辑、CSV/Excel 导入导出、数据备份等）之前，**必须先进行网络搜索，检索业界成熟开源项目、优质博客或官方推荐方案进行借鉴**。
-   * 吸收优秀的设计模式与交互细节，拒绝闭门造车或产出粗制滥造、脆弱劣质的实现。
+2. **借鉴先行，深入检索 GitHub 与成熟方案（Search GitHub & Web Before Building）**：
+   * 在构思或实现具体功能（例如复杂图表绘制、记账动效交互、数字键盘计算逻辑、CSV/Excel 导入导出、数据备份等）之前，**必须先进行网络搜索与 GitHub 深度检索**。
+   * **强制利用 GitHub CLI 工具链**：
+     * 搜仓库：`gh search repos <关键词> --sort stars` 检索业界高 Star 优秀开源 Android/Compose 记账项目；
+     * 搜代码：`gh search code <关键词> --language=kotlin` 跨全网检索具体的最佳源码实现；
+     * 看源码：`gh api repos/<owner>/<repo>/contents/<path>` 直接按需阅读目标文件，吸收优秀设计。
+   * 吸收业界成熟的设计模式与交互细节，拒绝闭门造车或产出粗制滥造、脆弱劣质的实现。
 3. **进度文档强行同步（Keep PROGRESS.md Updated）**：
    * 任何阶段性编码、Bug 修复、UI 样式调整或真机联调后，**必须第一时间更新根目录下的 [`PROGRESS.md`](PROGRESS.md)**，保证项目进度与改动履历清晰可溯。
 
@@ -104,4 +108,13 @@ D:\Android\Sdk\platform-tools\adb.exe logcat -s Bookkeeping:V AndroidRuntime:E
 
 # 7. GitHub 仓库操作 (GitHub CLI 已登录)
 & "D:\Program Files\GitHub CLI\gh.exe" repo create bookkeeping --public --source=. --remote=origin --push
+
+# 8. GitHub 搜索开源项目与仓库 (优先按 Star 排序)
+& "D:\Program Files\GitHub CLI\gh.exe" search repos "android compose bookkeeping" --sort stars --limit 5
+
+# 9. GitHub 跨全网搜索具体功能源码实现
+& "D:\Program Files\GitHub CLI\gh.exe" search code "DonutChart Compose" --language=kotlin --limit 5
+
+# 10. 免克隆直接读取指定仓库文件源码
+& "D:\Program Files\GitHub CLI\gh.exe" api repos/<owner>/<repo>/contents/<path>
 ```
