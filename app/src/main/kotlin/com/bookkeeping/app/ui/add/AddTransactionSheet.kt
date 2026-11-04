@@ -167,7 +167,7 @@ fun AddTransactionContent(
         modifier = modifier
             .fillMaxWidth()
             .verticalScroll(rememberScrollState())
-            .padding(bottom = 20.dp)
+            .padding(bottom = 6.dp)
     ) {
         // Header with Close and Liquid Pill Tabs
         Row(
@@ -241,12 +241,12 @@ fun AddTransactionContent(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .padding(horizontal = 16.dp, vertical = 4.dp)
                 .liquidGlass(
-                    shape = RoundedCornerShape(22.dp),
+                    shape = RoundedCornerShape(20.dp),
                     elevation = 6.dp
                 )
-                .padding(vertical = 14.dp, horizontal = 20.dp),
+                .padding(vertical = 8.dp, horizontal = 18.dp),
             contentAlignment = Alignment.CenterEnd
         ) {
             Row(
@@ -255,14 +255,14 @@ fun AddTransactionContent(
             ) {
                 Text(
                     text = "¥",
-                    fontSize = 24.sp,
+                    fontSize = 22.sp,
                     fontWeight = FontWeight.Bold,
                     color = if (isDark) Color(0xFF60A5FA) else Color(0xFF2563EB),
-                    modifier = Modifier.padding(bottom = 6.dp, end = 6.dp)
+                    modifier = Modifier.padding(bottom = 4.dp, end = 4.dp)
                 )
                 Text(
                     text = amountString,
-                    fontSize = 38.sp,
+                    fontSize = 32.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = if (isDark) Color.White else Color(0xFF111827),
                     maxLines = 1,
@@ -294,15 +294,15 @@ fun AddTransactionContent(
                     val isSelected = cat.id == selectedCategoryId
                     Column(
                         modifier = Modifier
-                            .padding(vertical = 6.dp, horizontal = 3.dp)
+                            .padding(vertical = 2.dp, horizontal = 2.dp)
                             .clip(RoundedCornerShape(12.dp))
                             .clickable { selectedCategoryId = cat.id }
-                            .padding(horizontal = 4.dp, vertical = 4.dp),
+                            .padding(horizontal = 4.dp, vertical = 2.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Box(
                             modifier = Modifier
-                                .size(46.dp)
+                                .size(40.dp)
                                 .clip(CircleShape)
                                 .background(
                                     if (isSelected) Color(cat.colorHex)
@@ -319,10 +319,10 @@ fun AddTransactionContent(
                                 imageVector = IconHelper.getCategoryIcon(cat.iconName),
                                 contentDescription = cat.name,
                                 tint = if (isSelected) Color.White else Color(cat.colorHex),
-                                modifier = Modifier.size(24.dp)
+                                modifier = Modifier.size(20.dp)
                             )
                         }
-                        Spacer(modifier = Modifier.height(4.dp))
+                        Spacer(modifier = Modifier.height(2.dp))
                         Text(
                             text = cat.name,
                             fontSize = 11.sp,

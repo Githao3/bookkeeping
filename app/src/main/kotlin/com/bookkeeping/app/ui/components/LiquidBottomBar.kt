@@ -27,6 +27,7 @@ import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.PieChart
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -72,36 +73,57 @@ fun LiquidBottomBar(
                     elevation = 16.dp,
                     hasRainbowRim = true
                 )
-                .padding(horizontal = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceAround
+                .padding(horizontal = 6.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            // Tab 0: 明细
-            LiquidTabItem(
-                selected = currentTab == 0,
-                icon = Icons.AutoMirrored.Filled.ReceiptLong,
-                label = "明细",
-                onClick = { onTabSelected(0) }
-            )
+            // Left pair of tabs
+            Row(
+                modifier = Modifier.weight(1f),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Tab 0: 明细
+                LiquidTabItem(
+                    selected = currentTab == 0,
+                    icon = Icons.AutoMirrored.Filled.ReceiptLong,
+                    label = "明细",
+                    onClick = { onTabSelected(0) }
+                )
 
-            // Tab 1: 统计
-            LiquidTabItem(
-                selected = currentTab == 1,
-                icon = Icons.Default.PieChart,
-                label = "统计",
-                onClick = { onTabSelected(1) }
-            )
+                // Tab 1: 统计
+                LiquidTabItem(
+                    selected = currentTab == 1,
+                    icon = Icons.Default.PieChart,
+                    label = "统计",
+                    onClick = { onTabSelected(1) }
+                )
+            }
 
             // Center space placeholder for the elevated Lens Action Button
-            Spacer(modifier = Modifier.width(60.dp))
+            Spacer(modifier = Modifier.width(68.dp))
 
-            // Tab 2: 资产
-            LiquidTabItem(
-                selected = currentTab == 2,
-                icon = Icons.Default.AccountBalanceWallet,
-                label = "资产",
-                onClick = { onTabSelected(2) }
-            )
+            // Right pair of tabs
+            Row(
+                modifier = Modifier.weight(1f),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Tab 2: 资产
+                LiquidTabItem(
+                    selected = currentTab == 2,
+                    icon = Icons.Default.AccountBalanceWallet,
+                    label = "资产",
+                    onClick = { onTabSelected(2) }
+                )
+
+                // Tab 3: 设置
+                LiquidTabItem(
+                    selected = currentTab == 3,
+                    icon = Icons.Default.Tune,
+                    label = "设置",
+                    onClick = { onTabSelected(3) }
+                )
+            }
         }
 
         // Center Elevated Liquid Lens Action Button (Like the green Coolapk / iQiyi button in the screenshot!)
@@ -144,7 +166,7 @@ private fun LiquidTabItem(
                 indication = null,
                 onClick = onClick
             )
-            .padding(horizontal = 14.dp, vertical = 6.dp)
+            .padding(horizontal = 8.dp, vertical = 4.dp)
             .scale(scale),
         contentAlignment = Alignment.Center
     ) {

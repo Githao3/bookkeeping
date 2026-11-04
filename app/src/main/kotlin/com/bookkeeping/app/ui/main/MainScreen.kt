@@ -24,6 +24,7 @@ import com.bookkeeping.app.ui.account.AccountScreen
 import com.bookkeeping.app.ui.add.AddTransactionContent
 import com.bookkeeping.app.ui.components.LiquidBottomBar
 import com.bookkeeping.app.ui.ledger.LedgerScreen
+import com.bookkeeping.app.ui.settings.SettingsScreen
 import com.bookkeeping.app.ui.stats.StatsScreen
 import com.bookkeeping.app.ui.theme.AmbientAtmosphereBackground
 
@@ -71,6 +72,10 @@ fun MainScreen(
                     accounts = accounts,
                     onAddAccount = { viewModel.addAccount(it) },
                     onDeleteAccount = { viewModel.deleteAccount(it) }
+                )
+                3 -> SettingsScreen(
+                    transactionCount = allTransactions.size,
+                    accountCount = accounts.size
                 )
             }
 

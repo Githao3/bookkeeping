@@ -41,8 +41,8 @@ fun NumberPad(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 10.dp, vertical = 6.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+            .padding(horizontal = 10.dp, vertical = 4.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         val rows = listOf(
             listOf("1", "2", "3", "C"),
@@ -54,7 +54,7 @@ fun NumberPad(
         rows.forEach { row ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 row.forEach { key ->
                     val isAction = key == "OK"
@@ -63,7 +63,7 @@ fun NumberPad(
                     val boxModifier = if (isAction) {
                         Modifier
                             .weight(1f)
-                            .height(56.dp)
+                            .height(50.dp)
                             .clip(buttonShape)
                             .background(
                                 Brush.verticalGradient(
@@ -74,7 +74,7 @@ fun NumberPad(
                     } else if (isOp) {
                         Modifier
                             .weight(1f)
-                            .height(56.dp)
+                            .height(50.dp)
                             .liquidGlass(shape = buttonShape, elevation = 2.dp, alphaMultiplier = 0.8f)
                             .clickable {
                                 when (key) {
@@ -86,7 +86,7 @@ fun NumberPad(
                     } else {
                         Modifier
                             .weight(1f)
-                            .height(56.dp)
+                            .height(50.dp)
                             .liquidGlass(shape = buttonShape, elevation = 3.dp)
                             .clickable { onDigitClick(key) }
                     }

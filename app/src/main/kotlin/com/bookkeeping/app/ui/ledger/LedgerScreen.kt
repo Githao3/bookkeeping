@@ -6,6 +6,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -87,7 +88,7 @@ fun LedgerScreen(
             .fillMaxSize()
             .padding(horizontal = 16.dp)
     ) {
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(14.dp))
 
         // Top Month Overview: Luxurious Liquid Glass Card
         Box(
@@ -263,7 +264,8 @@ fun LedgerScreen(
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .weight(1f)
+                    .weight(1f),
+                contentPadding = PaddingValues(bottom = 100.dp)
             ) {
                 grouped.forEach { (_, dayTransactions) ->
                     val firstTimestamp = dayTransactions.first().transaction.timestamp
@@ -317,7 +319,7 @@ fun LedgerScreen(
                             item = item,
                             onDelete = { transactionToDelete = item.transaction }
                         )
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(14.dp))
                     }
                 }
 
