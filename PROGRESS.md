@@ -38,3 +38,4 @@
 | **2026-11-04 00:34** | **UI 表现层** | 编写 `LedgerScreen`、`AddTransactionSheet`、`NumberPad`、`DonutChart`、`StatsScreen`、`AccountScreen` 及 `BookkeepingViewModel` | Compose 界面编写完成 |
 | **2026-11-04 00:35** | **测试与打包** | 编写 `FormatHelperTest` 单元测试；执行 `assembleDebug` 生成 `app-debug.apk` | 单元测试 100% 通过，APK 产出完成 |
 | **2026-11-04 21:28** | **协作与规范** | 创建 `AGENTS.md`（工具位置、踩坑总结、协作规则）与 `PROGRESS.md`（进度看板） | 文档建立完成 |
+| **2026-11-04 21:39** | **规范强化** | 在 `AGENTS.md` 中强化第一章节：严禁无端凭空臆造、实现功能前必须先网络搜索成熟方案借鉴、收录 GitHub CLI 配置 | 文档更新并通过 Git 提交 |

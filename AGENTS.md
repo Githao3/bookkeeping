@@ -1,10 +1,26 @@
 # AGENTS.md - 记账项目开发与协作指南
 
-> 本文档面向参与《简记账》（CoinFlow）项目开发的所有 AI Agent 与开发者，记录了本机关键开发环境、避坑指南、调试规范以及开发进度文档维护规则。
+> 本文档面向参与《简记账》（CoinFlow）项目开发的所有 AI Agent 与开发者，记录了本机关键开发环境、行为约束铁律、避坑指南、调试规范以及开发进度文档维护规则。
 
 ---
 
-## 一、 本机环境与关键工具路径 (Tool Locations)
+## 一、 行为铁律与开发约束 (Core Constraints & Rules)
+
+> [!CAUTION]
+> **以下为最高优先级的强约束行为铁律，所有 Agent 必须严格遵守，不得违背：**
+
+1. **严禁凭空臆造，求真务实（No Hallucination - Search & Verify First）**：
+   * 严禁臆造不存在的 API、类库版本号、Gradle 配置项或系统行为。
+   * 遇到不确定的版本兼容性（如 Kotlin 2.x 与 KSP/Room 对应版本）、Android 最新平台特性变更、废弃 API 替代方案等，**必须优先通过网络搜索或执行命令核查验证真实性**，确保事实与代码 100% 准确。
+2. **借鉴先行，调研成熟实现（Search & Learn Before Building）**：
+   * 在构思或实现具体功能（例如复杂图表绘制、记账动效交互、数字键盘计算逻辑、CSV/Excel 导入导出、数据备份等）之前，**必须先进行网络搜索，检索业界成熟开源项目、优质博客或官方推荐方案进行借鉴**。
+   * 吸收优秀的设计模式与交互细节，拒绝闭门造车或产出粗制滥造、脆弱劣质的实现。
+3. **进度文档强行同步（Keep PROGRESS.md Updated）**：
+   * 任何阶段性编码、Bug 修复、UI 样式调整或真机联调后，**必须第一时间更新根目录下的 [`PROGRESS.md`](PROGRESS.md)**，保证项目进度与改动履历清晰可溯。
+
+---
+
+## 二、 本机环境与关键工具路径 (Tool Locations)
 
 在进行构建、调试或命令行操作时，请优先使用以下已被验证过的绝对路径与配置：
 
@@ -16,13 +32,14 @@
 | **Compile Platforms** | `D:\Android\Sdk\platforms\android-37.0` | API 37 编译平台 |
 | **Java / JDK (JBR)** | `D:\Android\AndroidStudio\jbr` | OpenJDK 25.0.4（Android Studio 内置的高性能运行时） |
 | **Android CLI** | `C:\Users\Admin\AppData\AndroidCLI\android.exe` | 官方 Google Android CLI 工具 |
+| **GitHub CLI (gh)** | `D:\Program Files\GitHub CLI\gh.exe` | 已登录账号 `Githao3`，支持仓库托管与同步 |
 | **Gradle 用户目录** | `D:\Android\.gradle` | 集中缓存目录，避免占用 C 盘空间 |
 | **Gradle Wrapper** | `.\gradlew.bat` | 当前项目集成 Gradle 9.1.0 Wrapper |
 | **Debug APK 输出路径** | `app\build\outputs\apk\debug\app-debug.apk` | 编译生成的最新测试包 |
 
 ---
 
-## 二、 踩坑记录与重要技术经验 (Pitfalls & Gotchas)
+## 三、 踩坑记录与重要技术经验 (Pitfalls & Gotchas)
 
 ### 1. Java 25 与 Foojay Toolchain 自动下载冲突
 * **现象**：Gradle 9.1 构建时会默认尝试通过 Foojay Disco API 自动下载并切到 JDK 17，在某些内网/国内网络下极易超时挂起，导致 `ToolchainProvisioningException`。
@@ -49,7 +66,7 @@
 
 ---
 
-## 三、 进度文档维护规范 (Progress Updating Rule)
+## 四、 进度文档维护规范 (Progress Updating Rule)
 
 > [!IMPORTANT]
 > **强规则要求**：任何 Agent 在完成阶段性开发、Bug 修复、UI 调整或真机调试改动后，**必须同步更新根目录下的进度文档 [`PROGRESS.md`](PROGRESS.md)**。
@@ -64,7 +81,7 @@
 
 ---
 
-## 四、 常用命令行速查表 (Cheat Sheet)
+## 五、 常用命令行速查表 (Cheat Sheet)
 
 ```bash
 # 1. 检查 ADB 已连接设备
@@ -84,4 +101,7 @@ D:\Android\Sdk\platform-tools\adb.exe shell am start -n com.bookkeeping.app/.Mai
 
 # 6. 查看应用专属 Logcat 日志
 D:\Android\Sdk\platform-tools\adb.exe logcat -s Bookkeeping:V AndroidRuntime:E
+
+# 7. GitHub 仓库操作 (GitHub CLI 已登录)
+& "D:\Program Files\GitHub CLI\gh.exe" repo create bookkeeping --public --source=. --remote=origin --push
 ```
