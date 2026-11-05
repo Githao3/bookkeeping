@@ -8,6 +8,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,12 +17,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.filled.AccountBalanceWallet
@@ -29,7 +30,6 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.PieChart
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -45,8 +45,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.bookkeeping.app.ui.theme.LiquidGlassDefaults
-import com.bookkeeping.app.ui.theme.liquidGlass
+import com.bookkeeping.app.ui.backdrop.opticalLiquidGlass
+import com.bookkeeping.app.ui.theme.LiquidGlassTokens
 
 @Composable
 fun LiquidBottomBar(
@@ -60,18 +60,22 @@ fun LiquidBottomBar(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 14.dp),
+            .padding(horizontal = 24.dp)
+            .navigationBarsPadding()
+            .padding(bottom = 12.dp),
         contentAlignment = Alignment.Center
     ) {
-        // Floating Glass Island Capsule
+        // Floating Capsule Bar with Optical Liquid Glass & AGSL chromatic dispersion
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(68.dp)
-                .liquidGlass(
+                .height(66.dp)
+                .opticalLiquidGlass(
                     shape = CircleShape,
                     elevation = 16.dp,
-                    hasRainbowRim = true
+                    blurRadius = 36f,
+                    refractionHeight = 22f,
+                    refractionAmount = 18f
                 )
                 .padding(horizontal = 6.dp),
             verticalAlignment = Alignment.CenterVertically
@@ -82,16 +86,13 @@ fun LiquidBottomBar(
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Tab 0: 明细
-                LiquidTabItem(
+                CoolTabItem(
                     selected = currentTab == 0,
                     icon = Icons.AutoMirrored.Filled.ReceiptLong,
                     label = "明细",
                     onClick = { onTabSelected(0) }
                 )
-
-                // Tab 1: 统计
-                LiquidTabItem(
+                CoolTabItem(
                     selected = currentTab == 1,
                     icon = Icons.Default.PieChart,
                     label = "统计",
@@ -99,8 +100,8 @@ fun LiquidBottomBar(
                 )
             }
 
-            // Center space placeholder for the elevated Lens Action Button
-            Spacer(modifier = Modifier.width(68.dp))
+            // Center space reserved for the elevated Coolapk emerald lens button
+            Spacer(modifier = Modifier.width(66.dp))
 
             // Right pair of tabs
             Row(
@@ -108,16 +109,13 @@ fun LiquidBottomBar(
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Tab 2: 资产
-                LiquidTabItem(
+                CoolTabItem(
                     selected = currentTab == 2,
                     icon = Icons.Default.AccountBalanceWallet,
                     label = "资产",
                     onClick = { onTabSelected(2) }
                 )
-
-                // Tab 3: 设置
-                LiquidTabItem(
+                CoolTabItem(
                     selected = currentTab == 3,
                     icon = Icons.Default.Tune,
                     label = "设置",
@@ -126,39 +124,40 @@ fun LiquidBottomBar(
             }
         }
 
-        // Center Elevated Liquid Lens Action Button (Like the green Coolapk / iQiyi button in the screenshot!)
-        CenterLiquidAddButton(
+        // Center Elevated Coolapk-Style Liquid Lens Action Button
+        CoolapkElevatedAddButton(
             onClick = onAddClick,
-            modifier = Modifier.offset(y = (-4).dp)
+            modifier = Modifier.offset(y = (-8).dp)
         )
     }
 }
 
 @Composable
-private fun LiquidTabItem(
+private fun CoolTabItem(
     selected: Boolean,
     icon: ImageVector,
     label: String,
     onClick: () -> Unit
 ) {
     val isDark = isSystemInDarkTheme()
-    val scale by animateFloatAsState(
-        targetValue = if (selected) 1.08f else 1.0f,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
-        label = "scale"
-    )
+    val interactionSource = remember { MutableInteractionSource() }
 
-    val activeColor = if (isDark) Color(0xFF60A5FA) else Color(0xFF1677FF)
-    val inactiveColor = if (isDark) Color(0x99FFFFFF) else Color(0x99374151)
+    val activeColor = if (isDark) Color(0xFF60A5FA) else LiquidGlassTokens.AccentBlue
+    val inactiveColor = if (isDark) Color(0xFF9CA3AF) else Color(0xFF8E8E93)
 
     val contentColor by animateColorAsState(
         targetValue = if (selected) activeColor else inactiveColor,
-        label = "color"
+        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+        label = "contentColor"
     )
 
-    val interactionSource = remember { MutableInteractionSource() }
+    val scale by animateFloatAsState(
+        targetValue = if (selected) 1.06f else 1.0f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
+        label = "tabScale"
+    )
 
-    Box(
+    Column(
         modifier = Modifier
             .clip(CircleShape)
             .clickable(
@@ -166,94 +165,107 @@ private fun LiquidTabItem(
                 indication = null,
                 onClick = onClick
             )
-            .padding(horizontal = 8.dp, vertical = 4.dp)
-            .scale(scale),
-        contentAlignment = Alignment.Center
+            .scale(scale)
+            .padding(horizontal = 8.dp, vertical = 4.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            // Subtle active pill highlight background behind active tab
-            Box(
-                modifier = Modifier
-                    .clip(CircleShape)
-                    .background(
-                        if (selected) {
-                            if (isDark) Color(0x2B3B82F6) else Color(0x1F2563EB)
-                        } else Color.Transparent
-                    )
-                    .padding(horizontal = 12.dp, vertical = 3.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = label,
-                    tint = contentColor,
-                    modifier = Modifier.size(22.dp)
+        // Subtle indicator pill when active
+        Box(
+            modifier = Modifier
+                .clip(CircleShape)
+                .background(
+                    if (selected) {
+                        if (isDark) Color(0x2660A5FA) else Color(0x18007AFF)
+                    } else Color.Transparent
                 )
-            }
-
-            Text(
-                text = label,
-                fontSize = 11.sp,
-                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-                color = contentColor
+                .padding(horizontal = 14.dp, vertical = 3.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = label,
+                tint = contentColor,
+                modifier = Modifier.size(22.dp)
             )
         }
+
+        Spacer(modifier = Modifier.height(2.dp))
+
+        Text(
+            text = label,
+            fontSize = 10.sp,
+            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+            color = contentColor
+        )
     }
 }
 
 /**
- * Center elevated Liquid Lens button with refractive rainbow rim and radial glow
+ * True Coolapk/iQIYI Center Elevated Liquid Lens Button
+ * Features:
+ * - Convex glossy radial gradient (Emerald)
+ * - Specular rim highlight & diffused colored drop shadow
+ * - Interactive spring tactile bounce on click
  */
 @Composable
-private fun CenterLiquidAddButton(
+private fun CoolapkElevatedAddButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val emeraldGradient = Brush.verticalGradient(
-        listOf(
-            Color(0xFF00E599), // Top vibrant light emerald
-            Color(0xFF00B075), // Mid body
-            Color(0xFF00875A)  // Deep bottom rim
-        )
-    )
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
 
-    val rainbowSweep = Brush.sweepGradient(LiquidGlassDefaults.RainbowColors)
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.90f else 1.0f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
+        label = "buttonScale"
+    )
 
     Box(
         modifier = modifier
+            .scale(scale)
             .size(56.dp)
-            // Outer diffused colorful glow shadow
             .shadow(
-                elevation = 12.dp,
+                elevation = 14.dp,
                 shape = CircleShape,
-                ambientColor = Color(0x5500B075),
-                spotColor = Color(0x8800C48C)
+                ambientColor = Color(0x4000C853),
+                spotColor = Color(0x6000C853)
             )
-            // Chromatic aberration halo ring
-            .border(
-                width = 2.dp,
-                brush = rainbowSweep,
-                shape = CircleShape
-            )
-            .padding(2.dp)
             .clip(CircleShape)
-            .background(emeraldGradient)
+            .background(
+                Brush.radialGradient(
+                    colors = listOf(
+                        Color(0xFF00E676), // Bright liquid center
+                        Color(0xFF00C853), // Rich emerald body
+                        Color(0xFF00963E)  // Darker lens perimeter
+                    ),
+                    radius = 80f
+                )
+            )
             .border(
-                width = 1.dp,
-                color = Color(0x80FFFFFF),
+                width = 1.2.dp,
+                brush = Brush.verticalGradient(
+                    listOf(
+                        Color(0x99FFFFFF), // Top specular sheen
+                        Color(0x22FFFFFF),
+                        Color(0x40006428)  // Bottom depth rim
+                    )
+                ),
                 shape = CircleShape
             )
-            .clickable(onClick = onClick),
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onClick
+            ),
         contentAlignment = Alignment.Center
     ) {
         Icon(
             imageVector = Icons.Default.Add,
             contentDescription = "记一笔",
             tint = Color.White,
-            modifier = Modifier.size(30.dp)
+            modifier = Modifier.size(28.dp)
         )
     }
 }

@@ -67,7 +67,7 @@ fun NumberPad(
                             .clip(buttonShape)
                             .background(
                                 Brush.verticalGradient(
-                                    listOf(Color(0xFF00E599), Color(0xFF00B075))
+                                    listOf(Color(0xFF00E676), Color(0xFF00C853))
                                 )
                             )
                             .clickable(onClick = onCompleteClick)

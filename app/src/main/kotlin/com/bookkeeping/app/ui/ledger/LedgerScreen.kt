@@ -14,9 +14,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -26,9 +26,7 @@ import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -40,6 +38,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -49,6 +48,7 @@ import com.bookkeeping.app.data.local.entity.TransactionType
 import com.bookkeeping.app.data.local.model.TransactionWithDetails
 import com.bookkeeping.app.ui.common.FormatHelper
 import com.bookkeeping.app.ui.common.IconHelper
+import com.bookkeeping.app.ui.theme.LiquidGlassTokens
 import com.bookkeeping.app.ui.theme.liquidGlass
 import java.util.Calendar
 
@@ -86,140 +86,152 @@ fun LedgerScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
+            .statusBarsPadding()
             .padding(horizontal = 16.dp)
     ) {
-        Spacer(modifier = Modifier.height(14.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
-        // Top Month Overview: Luxurious Liquid Glass Card
+        // Month Selector Bar
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 4.dp, vertical = 6.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Month Pill
+            Row(
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .background(if (isDark) Color(0x33FFFFFF) else Color(0x0F000000))
+                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = FormatHelper.formatMonth(currentMonthTimestamp),
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = if (isDark) LiquidGlassTokens.TextPrimaryDark else LiquidGlassTokens.TextPrimaryLight
+                )
+            }
+
+            // Month Stepper Arrows
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Box(
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clip(CircleShape)
+                        .background(if (isDark) Color(0x26FFFFFF) else Color(0x0F000000))
+                        .clickable(onClick = onPreviousMonth),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        Icons.Default.ChevronLeft,
+                        contentDescription = "上月",
+                        tint = if (isDark) Color.White else Color(0xFF374151),
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clip(CircleShape)
+                        .background(if (isDark) Color(0x26FFFFFF) else Color(0x0F000000))
+                        .clickable(onClick = onNextMonth),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        Icons.Default.ChevronRight,
+                        contentDescription = "下月",
+                        tint = if (isDark) Color.White else Color(0xFF374151),
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Hero Monthly Overview: Refined Apple-Style Liquid Glass Card
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .liquidGlass(
-                    shape = RoundedCornerShape(26.dp),
-                    elevation = 12.dp
+                    shape = RoundedCornerShape(24.dp),
+                    elevation = 8.dp
                 )
                 .padding(20.dp)
         ) {
             Column {
-                // Month Header with Glass Pills for Previous/Next
+                Text(
+                    text = "本月总支出 (元)",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = if (isDark) LiquidGlassTokens.TextSecondaryDark else LiquidGlassTokens.TextSecondaryLight
+                )
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                // Commanding Financial Typographic Amount
+                Text(
+                    text = FormatHelper.formatCurrency(totalExpense),
+                    fontSize = 34.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = (-0.5).sp,
+                    color = if (isDark) LiquidGlassTokens.TextPrimaryDark else LiquidGlassTokens.TextPrimaryLight
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Income & Balance Secondary Metrics
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(36.dp)
-                            .liquidGlass(shape = CircleShape, elevation = 2.dp)
-                            .clickable(onClick = onPreviousMonth),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            Icons.Default.ChevronLeft,
-                            contentDescription = "上月",
-                            tint = if (isDark) Color.White else Color(0xFF1F2937),
-                            modifier = Modifier.size(20.dp)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(8.dp)
+                                .clip(CircleShape)
+                                .background(LiquidGlassTokens.IncomeGreen)
                         )
-                    }
-
-                    Text(
-                        text = FormatHelper.formatMonth(currentMonthTimestamp),
-                        fontSize = 19.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = if (isDark) Color.White else Color(0xFF111827)
-                    )
-
-                    Box(
-                        modifier = Modifier
-                            .size(36.dp)
-                            .liquidGlass(shape = CircleShape, elevation = 2.dp)
-                            .clickable(onClick = onNextMonth),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            Icons.Default.ChevronRight,
-                            contentDescription = "下月",
-                            tint = if (isDark) Color.White else Color(0xFF1F2937),
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(18.dp))
-
-                // Stats: 3 Columns
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    // Expense
-                    Column(
-                        modifier = Modifier.weight(1f),
-                        horizontalAlignment = Alignment.Start
-                    ) {
+                        Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = "总支出",
-                            fontSize = 12.sp,
+                            text = "总收入: ${FormatHelper.formatCurrency(totalIncome)}",
+                            fontSize = 13.sp,
                             fontWeight = FontWeight.Medium,
-                            color = if (isDark) Color(0xFF9CA3AF) else Color(0xFF6B7280)
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = FormatHelper.formatCurrency(totalExpense),
-                            fontSize = 17.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFFEF4444) // Coral Red
+                            color = if (isDark) LiquidGlassTokens.TextSecondaryDark else LiquidGlassTokens.TextSecondaryLight
                         )
                     }
 
-                    // Income
-                    Column(
-                        modifier = Modifier.weight(1f),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(8.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    if (balance >= 0) LiquidGlassTokens.AccentBlue else LiquidGlassTokens.ExpenseRed
+                                )
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = "总收入",
-                            fontSize = 12.sp,
+                            text = "结余: ${FormatHelper.formatCurrency(balance)}",
+                            fontSize = 13.sp,
                             fontWeight = FontWeight.Medium,
-                            color = if (isDark) Color(0xFF9CA3AF) else Color(0xFF6B7280)
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = FormatHelper.formatCurrency(totalIncome),
-                            fontSize = 17.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF10B981) // Emerald Green
-                        )
-                    }
-
-                    // Balance
-                    Column(
-                        modifier = Modifier.weight(1f),
-                        horizontalAlignment = Alignment.End
-                    ) {
-                        Text(
-                            text = "结余",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = if (isDark) Color(0xFF9CA3AF) else Color(0xFF6B7280)
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = FormatHelper.formatCurrency(balance),
-                            fontSize = 17.sp,
-                            fontWeight = FontWeight.Bold,
                             color = if (balance >= 0) {
-                                if (isDark) Color(0xFF38BDF8) else Color(0xFF0284C7)
-                            } else Color(0xFFEF4444)
+                                if (isDark) Color(0xFF60A5FA) else LiquidGlassTokens.AccentBlue
+                            } else LiquidGlassTokens.ExpenseRed
                         )
                     }
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(14.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-        // Transactions List
+        // Transactions List: Inset Grouped iOS Style
         if (transactions.isEmpty()) {
             Box(
                 modifier = Modifier
@@ -227,37 +239,34 @@ fun LedgerScreen(
                     .weight(1f),
                 contentAlignment = Alignment.Center
             ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth(0.85f)
-                        .liquidGlass(
-                            shape = RoundedCornerShape(24.dp),
-                            elevation = 6.dp
-                        )
-                        .padding(vertical = 36.dp, horizontal = 20.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Box(
+                        modifier = Modifier
+                            .size(72.dp)
+                            .clip(CircleShape)
+                            .background(if (isDark) Color(0x1FFFFFFF) else Color(0x0A000000)),
+                        contentAlignment = Alignment.Center
+                    ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ReceiptLong,
                             contentDescription = null,
-                            modifier = Modifier.size(54.dp),
-                            tint = if (isDark) Color(0x66FFFFFF) else Color(0x44000000)
-                        )
-                        Spacer(modifier = Modifier.height(14.dp))
-                        Text(
-                            text = "本月暂无账单明细",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = if (isDark) Color.White else Color(0xFF1F2937)
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "轻触底部晶莹「+」按钮，记录第一笔吧",
-                            fontSize = 13.sp,
-                            color = if (isDark) Color(0xFF9CA3AF) else Color(0xFF6B7280)
+                            modifier = Modifier.size(36.dp),
+                            tint = if (isDark) Color(0x55FFFFFF) else Color(0x40000000)
                         )
                     }
+                    Spacer(modifier = Modifier.height(14.dp))
+                    Text(
+                        text = "本月暂无账单记录",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = if (isDark) LiquidGlassTokens.TextSecondaryDark else LiquidGlassTokens.TextSecondaryLight
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "轻触下方绿色「+」按钮，记录每一笔收支",
+                        fontSize = 12.sp,
+                        color = if (isDark) LiquidGlassTokens.TextTertiaryDark else LiquidGlassTokens.TextTertiaryLight
+                    )
                 }
             }
         } else {
@@ -265,15 +274,12 @@ fun LedgerScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .weight(1f),
-                contentPadding = PaddingValues(bottom = 100.dp)
+                contentPadding = PaddingValues(bottom = 110.dp)
             ) {
                 grouped.forEach { (_, dayTransactions) ->
                     val firstTimestamp = dayTransactions.first().transaction.timestamp
                     val dayExpense = dayTransactions
                         .filter { it.transaction.type == TransactionType.EXPENSE }
-                        .sumOf { it.transaction.amount }
-                    val dayIncome = dayTransactions
-                        .filter { it.transaction.type == TransactionType.INCOME }
                         .sumOf { it.transaction.amount }
 
                     // Daily Header
@@ -281,73 +287,87 @@ fun LedgerScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 8.dp, horizontal = 4.dp),
+                                .padding(top = 14.dp, bottom = 6.dp, start = 4.dp, end = 4.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
                                 text = FormatHelper.formatDayHeader(firstTimestamp),
-                                fontSize = 12.sp,
+                                fontSize = 13.sp,
                                 fontWeight = FontWeight.SemiBold,
-                                color = if (isDark) Color(0xFF9CA3AF) else Color(0xFF6B7280)
+                                color = if (isDark) LiquidGlassTokens.TextSecondaryDark else LiquidGlassTokens.TextSecondaryLight
                             )
-
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                if (dayExpense > 0.0) {
-                                    Text(
-                                        text = "支 ${FormatHelper.formatCurrency(dayExpense)}",
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Medium,
-                                        color = if (isDark) Color(0xFFD1D5DB) else Color(0xFF4B5563)
-                                    )
-                                }
-                                if (dayIncome > 0.0) {
-                                    Text(
-                                        text = "收 ${FormatHelper.formatCurrency(dayIncome)}",
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Medium,
-                                        color = Color(0xFF10B981)
-                                    )
-                                }
+                            if (dayExpense > 0) {
+                                Text(
+                                    text = "支出 ¥${String.format(java.util.Locale.CHINA, "%.2f", dayExpense)}",
+                                    fontSize = 12.sp,
+                                    color = if (isDark) LiquidGlassTokens.TextTertiaryDark else LiquidGlassTokens.TextTertiaryLight
+                                )
                             }
                         }
                     }
 
-                    // Transactions in this day
-                    items(dayTransactions, key = { it.transaction.id }) { item ->
-                        LiquidTransactionCard(
-                            item = item,
-                            onDelete = { transactionToDelete = item.transaction }
-                        )
-                        Spacer(modifier = Modifier.height(14.dp))
+                    // Inset Grouped Day Card
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .liquidGlass(
+                                    shape = RoundedCornerShape(20.dp),
+                                    elevation = 3.dp
+                                )
+                        ) {
+                            Column {
+                                dayTransactions.forEachIndexed { index, item ->
+                                    ModernTransactionRow(
+                                        item = item,
+                                        onClick = { transactionToDelete = item.transaction }
+                                    )
+                                    if (index < dayTransactions.size - 1) {
+                                        Spacer(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(start = 68.dp, end = 16.dp)
+                                                .height(0.6.dp)
+                                                .background(if (isDark) Color(0x1FFFFFFF) else Color(0x0A000000))
+                                        )
+                                    }
+                                }
+                            }
+                        }
                     }
-                }
-
-                // Bottom padding for floating navigation bar
-                item {
-                    Spacer(modifier = Modifier.height(88.dp))
                 }
             }
         }
     }
 
-    // Delete confirmation dialog
-    transactionToDelete?.let { tx ->
+    // Deletion Confirmation Dialog
+    if (transactionToDelete != null) {
+        val target = transactionToDelete!!
         AlertDialog(
             onDismissRequest = { transactionToDelete = null },
-            icon = { Icon(Icons.Default.DeleteOutline, contentDescription = null) },
-            title = { Text("确认删除此记录？") },
+            icon = {
+                Icon(
+                    Icons.Default.DeleteOutline,
+                    contentDescription = null,
+                    tint = LiquidGlassTokens.ExpenseRed
+                )
+            },
+            title = { Text("确认删除该账单？", fontWeight = FontWeight.Bold) },
             text = {
-                Text("删除此笔金额（${FormatHelper.formatCurrency(tx.amount)}）将自动同步回退对应的账户余额。")
+                Text(
+                    "金额: ¥${String.format(java.util.Locale.CHINA, "%.2f", target.amount)}\n" +
+                            "删除后相关账户余额将自动联动回滚。"
+                )
             },
             confirmButton = {
                 TextButton(
                     onClick = {
-                        onDeleteTransaction(tx)
+                        onDeleteTransaction(target)
                         transactionToDelete = null
                     }
                 ) {
-                    Text("删除", color = MaterialTheme.colorScheme.error)
+                    Text("删除", color = LiquidGlassTokens.ExpenseRed, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
@@ -360,10 +380,9 @@ fun LedgerScreen(
 }
 
 @Composable
-fun LiquidTransactionCard(
+private fun ModernTransactionRow(
     item: TransactionWithDetails,
-    onDelete: () -> Unit,
-    modifier: Modifier = Modifier
+    onClick: () -> Unit
 ) {
     val tx = item.transaction
     val category = item.category
@@ -371,125 +390,99 @@ fun LiquidTransactionCard(
     val targetAccount = item.targetAccount
     val isDark = isSystemInDarkTheme()
 
-    Box(
-        modifier = modifier
+    Row(
+        modifier = Modifier
             .fillMaxWidth()
-            .liquidGlass(
-                shape = RoundedCornerShape(18.dp),
-                elevation = 4.dp
-            )
-            .clickable(onClick = onDelete)
-            .padding(14.dp)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Category Icon in Frosted Glow Circle
-            val (icon, bgCol) = when (tx.type) {
-                TransactionType.EXPENSE -> {
-                    val color = category?.let { Color(it.colorHex) } ?: Color(0xFFFF7043)
-                    val ic = category?.let { IconHelper.getCategoryIcon(it.iconName) }
-                        ?: IconHelper.getCategoryIcon("Restaurant")
-                    ic to color
-                }
-                TransactionType.INCOME -> {
-                    val color = category?.let { Color(it.colorHex) } ?: Color(0xFF10B981)
-                    val ic = category?.let { IconHelper.getCategoryIcon(it.iconName) }
-                        ?: IconHelper.getCategoryIcon("Work")
-                    ic to color
-                }
-                TransactionType.TRANSFER -> {
-                    IconHelper.getCategoryIcon("Transfer") to Color(0xFF3B82F6)
-                }
-            }
-
-            Box(
-                modifier = Modifier
-                    .size(44.dp)
-                    .clip(CircleShape)
-                    .background(bgCol.copy(alpha = 0.18f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = bgCol,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.width(14.dp))
-
-            // Details
-            Column(modifier = Modifier.weight(1f)) {
-                val title = when (tx.type) {
-                    TransactionType.EXPENSE, TransactionType.INCOME -> category?.name ?: "未分类"
-                    TransactionType.TRANSFER -> "转账"
-                }
-                Text(
-                    text = title,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = if (isDark) Color.White else Color(0xFF111827)
-                )
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    val accountDesc = when (tx.type) {
-                        TransactionType.EXPENSE, TransactionType.INCOME -> sourceAccount?.name ?: "账户"
-                        TransactionType.TRANSFER -> "${sourceAccount?.name} ➔ ${targetAccount?.name}"
-                    }
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(6.dp))
-                            .background(
-                                if (isDark) Color(0x33FFFFFF) else Color(0x1A000000)
-                            )
-                            .padding(horizontal = 6.dp, vertical = 2.dp)
-                    ) {
-                        Text(
-                            text = accountDesc,
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = if (isDark) Color(0xFFD1D5DB) else Color(0xFF4B5563)
-                        )
-                    }
-
-                    if (tx.note.isNotBlank()) {
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = tx.note,
-                            fontSize = 12.sp,
-                            color = if (isDark) Color(0xFF9CA3AF) else Color(0xFF6B7280),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                }
-            }
-
-            // Amount & Time
-            Column(horizontalAlignment = Alignment.End) {
-                val (prefix, amountCol) = when (tx.type) {
-                    TransactionType.EXPENSE -> "-" to if (isDark) Color(0xFFF87171) else Color(0xFFEF4444)
-                    TransactionType.INCOME -> "+" to Color(0xFF10B981)
-                    TransactionType.TRANSFER -> "" to Color(0xFF3B82F6)
-                }
-                Text(
-                    text = "$prefix${FormatHelper.formatCurrency(tx.amount)}",
-                    fontSize = 17.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = amountCol
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = FormatHelper.formatTime(tx.timestamp),
-                    fontSize = 11.sp,
-                    color = if (isDark) Color(0xFF6B7280) else Color(0xFF9CA3AF)
-                )
-            }
+        // Category Icon with Soft Pastel Tinted Circle
+        val baseColor = when (tx.type) {
+            TransactionType.TRANSFER -> Color(0xFF6366F1)
+            else -> category?.let { Color(it.colorHex) } ?: Color(0xFF9E9E9E)
         }
+
+        Box(
+            modifier = Modifier
+                .size(42.dp)
+                .clip(CircleShape)
+                .background(baseColor.copy(alpha = if (isDark) 0.25f else 0.12f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = if (tx.type == TransactionType.TRANSFER) {
+                    IconHelper.getCategoryIcon("swap_horiz")
+                } else {
+                    IconHelper.getCategoryIcon(category?.iconName ?: "")
+                },
+                contentDescription = category?.name ?: "转账",
+                tint = baseColor,
+                modifier = Modifier.size(22.dp)
+            )
+        }
+
+        Spacer(modifier = Modifier.width(14.dp))
+
+        // Center Details: Name & Account/Time Subtext
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = when (tx.type) {
+                    TransactionType.TRANSFER -> "转账"
+                    else -> category?.name ?: "未分类"
+                },
+                fontSize = 15.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = if (isDark) LiquidGlassTokens.TextPrimaryDark else LiquidGlassTokens.TextPrimaryLight,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+
+            Spacer(modifier = Modifier.height(2.dp))
+
+            val subtitle = buildString {
+                when (tx.type) {
+                    TransactionType.TRANSFER -> {
+                        append("${sourceAccount?.name ?: "账户"} ➔ ${targetAccount?.name ?: "账户"}")
+                    }
+                    else -> {
+                        sourceAccount?.name?.let { append(it) }
+                    }
+                }
+                if (tx.note.isNotBlank()) {
+                    if (isNotEmpty()) append(" · ")
+                    append(tx.note)
+                }
+            }
+
+            Text(
+                text = subtitle,
+                fontSize = 12.sp,
+                color = if (isDark) LiquidGlassTokens.TextSecondaryDark else LiquidGlassTokens.TextSecondaryLight,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+
+        Spacer(modifier = Modifier.width(8.dp))
+
+        // Right Amount: Clean Tabular Figures
+        val amountPrefix = when (tx.type) {
+            TransactionType.EXPENSE -> "-"
+            TransactionType.INCOME -> "+"
+            TransactionType.TRANSFER -> ""
+        }
+        val amountColor = when (tx.type) {
+            TransactionType.EXPENSE -> if (isDark) LiquidGlassTokens.TextPrimaryDark else LiquidGlassTokens.TextPrimaryLight
+            TransactionType.INCOME -> LiquidGlassTokens.IncomeGreen
+            TransactionType.TRANSFER -> if (isDark) Color(0xFF818CF8) else Color(0xFF6366F1)
+        }
+
+        Text(
+            text = "$amountPrefix${FormatHelper.formatCurrency(tx.amount)}",
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold,
+            color = amountColor
+        )
     }
 }

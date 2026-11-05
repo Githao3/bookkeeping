@@ -1,6 +1,7 @@
 package com.bookkeeping.app.ui.settings
 
 import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
@@ -37,6 +39,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.bookkeeping.app.ui.theme.LiquidGlassTokens
 import com.bookkeeping.app.ui.theme.liquidGlass
 
 @Composable
@@ -51,17 +54,18 @@ fun SettingsScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
+            .statusBarsPadding()
             .padding(horizontal = 16.dp)
     ) {
-        Spacer(modifier = Modifier.height(14.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
         // Hero Glass Header
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .liquidGlass(
-                    shape = RoundedCornerShape(26.dp),
-                    elevation = 12.dp
+                    shape = RoundedCornerShape(24.dp),
+                    elevation = 8.dp
                 )
                 .padding(20.dp)
         ) {
@@ -71,15 +75,16 @@ fun SettingsScreen(
             ) {
                 Box(
                     modifier = Modifier
-                        .size(52.dp)
-                        .liquidGlass(shape = CircleShape, elevation = 4.dp),
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .background(if (isDark) Color(0x3360A5FA) else Color(0x18007AFF)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         Icons.Default.Tune,
                         contentDescription = null,
-                        tint = if (isDark) Color(0xFF60A5FA) else Color(0xFF2563EB),
-                        modifier = Modifier.size(28.dp)
+                        tint = LiquidGlassTokens.AccentBlue,
+                        modifier = Modifier.size(24.dp)
                     )
                 }
 
@@ -87,27 +92,27 @@ fun SettingsScreen(
 
                 Column {
                     Text(
-                        text = "设置与关于",
-                        fontSize = 20.sp,
+                        text = "偏好与设置",
+                        fontSize = 19.sp,
                         fontWeight = FontWeight.Bold,
-                        color = if (isDark) Color.White else Color(0xFF111827)
+                        color = if (isDark) LiquidGlassTokens.TextPrimaryDark else LiquidGlassTokens.TextPrimaryLight
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(3.dp))
                     Text(
-                        text = "简记账 CoinFlow · 纯本地离线隐私",
-                        fontSize = 13.sp,
-                        color = if (isDark) Color(0xFF9CA3AF) else Color(0xFF6B7280)
+                        text = "CoinFlow · 极简液态离线记账",
+                        fontSize = 12.sp,
+                        color = if (isDark) LiquidGlassTokens.TextSecondaryDark else LiquidGlassTokens.TextSecondaryLight
                     )
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(18.dp))
 
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(bottom = 100.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+            contentPadding = PaddingValues(bottom = 110.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // Section: Data & Backup
             item {
@@ -115,38 +120,37 @@ fun SettingsScreen(
                     text = "数据与安全",
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = if (isDark) Color(0xFF9CA3AF) else Color(0xFF6B7280),
-                    modifier = Modifier.padding(start = 6.dp, bottom = 4.dp)
+                    color = if (isDark) LiquidGlassTokens.TextSecondaryDark else LiquidGlassTokens.TextSecondaryLight,
+                    modifier = Modifier.padding(start = 4.dp, bottom = 6.dp)
                 )
 
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .liquidGlass(
-                            shape = RoundedCornerShape(22.dp),
-                            elevation = 6.dp
+                            shape = RoundedCornerShape(20.dp),
+                            elevation = 3.dp
                         )
-                        .padding(vertical = 8.dp)
                 ) {
                     Column {
                         SettingsRow(
                             icon = Icons.Default.Security,
-                            iconColor = Color(0xFF10B981),
+                            iconColor = LiquidGlassTokens.IncomeGreen,
                             title = "隐私模式",
-                            subtitle = "100% 离线运行，数据绝不出手机",
-                            trailing = "已启用"
+                            subtitle = "100% 本地离线，数据不出手机",
+                            trailing = "已保护"
                         )
 
-                        SettingsDivider()
+                        SettingsDivider(isDark)
 
                         SettingsRow(
                             icon = Icons.Default.FileDownload,
-                            iconColor = Color(0xFF3B82F6),
+                            iconColor = LiquidGlassTokens.AccentBlue,
                             title = "账单导出 (CSV)",
                             subtitle = "一键导出当前 $transactionCount 笔流水记录",
                             trailing = "导出",
                             onClick = {
-                                Toast.makeText(context, "已整理 $transactionCount 笔账单，导出功能就绪", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, "已就绪 $transactionCount 笔账单，导出功能就绪", Toast.LENGTH_SHORT).show()
                             }
                         )
                     }
@@ -156,29 +160,28 @@ fun SettingsScreen(
             // Section: Visual & Experience
             item {
                 Text(
-                    text = "视觉与设计",
+                    text = "视觉系统",
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = if (isDark) Color(0xFF9CA3AF) else Color(0xFF6B7280),
-                    modifier = Modifier.padding(start = 6.dp, bottom = 4.dp)
+                    color = if (isDark) LiquidGlassTokens.TextSecondaryDark else LiquidGlassTokens.TextSecondaryLight,
+                    modifier = Modifier.padding(start = 4.dp, bottom = 6.dp)
                 )
 
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .liquidGlass(
-                            shape = RoundedCornerShape(22.dp),
-                            elevation = 6.dp
+                            shape = RoundedCornerShape(20.dp),
+                            elevation = 3.dp
                         )
-                        .padding(vertical = 8.dp)
                 ) {
                     Column {
                         SettingsRow(
                             icon = Icons.Default.AutoAwesome,
-                            iconColor = Color(0xFFEC4899),
-                            title = "设计风格",
-                            subtitle = "iOS 液态玻璃（悬浮彩虹胶囊）",
-                            trailing = "已生效"
+                            iconColor = Color(0xFF8B5CF6),
+                            title = "设计质感",
+                            subtitle = "iOS 液态玻璃 (Kyant0 Backdrop AGSL)",
+                            trailing = "生效中"
                         )
                     }
                 }
@@ -187,29 +190,28 @@ fun SettingsScreen(
             // Section: About
             item {
                 Text(
-                    text = "关于简记账",
+                    text = "关于应用",
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = if (isDark) Color(0xFF9CA3AF) else Color(0xFF6B7280),
-                    modifier = Modifier.padding(start = 6.dp, bottom = 4.dp)
+                    color = if (isDark) LiquidGlassTokens.TextSecondaryDark else LiquidGlassTokens.TextSecondaryLight,
+                    modifier = Modifier.padding(start = 4.dp, bottom = 6.dp)
                 )
 
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .liquidGlass(
-                            shape = RoundedCornerShape(22.dp),
-                            elevation = 6.dp
+                            shape = RoundedCornerShape(20.dp),
+                            elevation = 3.dp
                         )
-                        .padding(vertical = 8.dp)
                 ) {
                     Column {
                         SettingsRow(
                             icon = Icons.Default.Info,
-                            iconColor = Color(0xFF8B5CF6),
+                            iconColor = LiquidGlassTokens.TextSecondaryLight,
                             title = "当前版本",
                             subtitle = "CoinFlow v1.0.0 (Release Build)",
-                            trailing = "最新"
+                            trailing = "最新版"
                         )
                     }
                 }
@@ -238,15 +240,16 @@ private fun SettingsRow(
     ) {
         Box(
             modifier = Modifier
-                .size(40.dp)
-                .liquidGlass(shape = RoundedCornerShape(12.dp), elevation = 2.dp),
+                .size(38.dp)
+                .clip(CircleShape)
+                .background(iconColor.copy(alpha = if (isDark) 0.25f else 0.12f)),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
                 tint = iconColor,
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier.size(18.dp)
             )
         }
 
@@ -257,13 +260,13 @@ private fun SettingsRow(
                 text = title,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = if (isDark) Color.White else Color(0xFF1F2937)
+                color = if (isDark) LiquidGlassTokens.TextPrimaryDark else LiquidGlassTokens.TextPrimaryLight
             )
             Spacer(modifier = Modifier.height(2.dp))
             Text(
                 text = subtitle,
                 fontSize = 12.sp,
-                color = if (isDark) Color(0xFF9CA3AF) else Color(0xFF6B7280)
+                color = if (isDark) LiquidGlassTokens.TextSecondaryDark else LiquidGlassTokens.TextSecondaryLight
             )
         }
 
@@ -272,7 +275,7 @@ private fun SettingsRow(
                 text = trailing,
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Medium,
-                color = if (isDark) Color(0xFF60A5FA) else Color(0xFF2563EB)
+                color = if (isDark) Color(0xFF60A5FA) else LiquidGlassTokens.AccentBlue
             )
         }
 
@@ -282,21 +285,19 @@ private fun SettingsRow(
                 imageVector = Icons.Default.ChevronRight,
                 contentDescription = null,
                 tint = if (isDark) Color(0xFF6B7280) else Color(0xFF9CA3AF),
-                modifier = Modifier.size(18.dp)
+                modifier = Modifier.size(16.dp)
             )
         }
     }
 }
 
 @Composable
-private fun SettingsDivider() {
-    val isDark = isSystemInDarkTheme()
+private fun SettingsDivider(isDark: Boolean) {
     Spacer(
         modifier = Modifier
             .fillMaxWidth()
-            .height(0.5.dp)
-            .padding(horizontal = 16.dp)
-            .clip(CircleShape)
-            .liquidGlass(shape = CircleShape, elevation = 0.dp)
+            .padding(start = 68.dp, end = 16.dp)
+            .height(0.6.dp)
+            .background(if (isDark) Color(0x1FFFFFFF) else Color(0x0A000000))
     )
 }
