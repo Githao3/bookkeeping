@@ -18,10 +18,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ReceiptLong
@@ -45,9 +43,16 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.bookkeeping.app.ui.backdrop.opticalLiquidGlass
+import com.bookkeeping.app.ui.backdrop.LiquidGlassSurface
 import com.bookkeeping.app.ui.theme.LiquidGlassTokens
 
+/**
+ * Authentic Coolapk (酷安) Floating Liquid Glass Capsule Navigation Bar.
+ * Directly references the official Coolapk bar in the design brief:
+ * - 5 mathematically balanced symmetrical slots (2 left, 1 center elevated emerald lens button, 2 right).
+ * - Real hardware AGSL SDF lens refraction & chromatic dispersion on the glass surface.
+ * - 100% crisp foreground icons and typography without blur.
+ */
 @Composable
 fun LiquidBottomBar(
     currentTab: Int,
@@ -55,80 +60,94 @@ fun LiquidBottomBar(
     onAddClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val isDark = isSystemInDarkTheme()
-
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 24.dp)
+            .padding(horizontal = 18.dp)
             .navigationBarsPadding()
-            .padding(bottom = 12.dp),
+            .padding(bottom = 10.dp),
         contentAlignment = Alignment.Center
     ) {
-        // Floating Capsule Bar with Optical Liquid Glass & AGSL chromatic dispersion
-        Row(
+        // Floating Pill Capsule with Isolated AGSL Liquid Glass Shader
+        LiquidGlassSurface(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(66.dp)
-                .opticalLiquidGlass(
-                    shape = CircleShape,
-                    elevation = 16.dp,
-                    blurRadius = 36f,
-                    refractionHeight = 22f,
-                    refractionAmount = 18f
-                )
-                .padding(horizontal = 6.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .height(68.dp),
+            shape = CircleShape,
+            elevation = 14.dp,
+            surfaceAlpha = 0.94f
         ) {
-            // Left pair of tabs
+            // Symmetrical 5-Slot Layout (weight = 1f each)
             Row(
-                modifier = Modifier.weight(1f),
-                horizontalArrangement = Arrangement.SpaceEvenly,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(68.dp)
+                    .padding(horizontal = 4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                CoolTabItem(
-                    selected = currentTab == 0,
-                    icon = Icons.AutoMirrored.Filled.ReceiptLong,
-                    label = "明细",
-                    onClick = { onTabSelected(0) }
-                )
-                CoolTabItem(
-                    selected = currentTab == 1,
-                    icon = Icons.Default.PieChart,
-                    label = "统计",
-                    onClick = { onTabSelected(1) }
-                )
-            }
+                // Slot 1: 明细
+                Box(
+                    modifier = Modifier.weight(1f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CoolTabItem(
+                        selected = currentTab == 0,
+                        icon = Icons.AutoMirrored.Filled.ReceiptLong,
+                        label = "明细",
+                        onClick = { onTabSelected(0) }
+                    )
+                }
 
-            // Center space reserved for the elevated Coolapk emerald lens button
-            Spacer(modifier = Modifier.width(66.dp))
+                // Slot 2: 统计
+                Box(
+                    modifier = Modifier.weight(1f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CoolTabItem(
+                        selected = currentTab == 1,
+                        icon = Icons.Default.PieChart,
+                        label = "统计",
+                        onClick = { onTabSelected(1) }
+                    )
+                }
 
-            // Right pair of tabs
-            Row(
-                modifier = Modifier.weight(1f),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                CoolTabItem(
-                    selected = currentTab == 2,
-                    icon = Icons.Default.AccountBalanceWallet,
-                    label = "资产",
-                    onClick = { onTabSelected(2) }
-                )
-                CoolTabItem(
-                    selected = currentTab == 3,
-                    icon = Icons.Default.Tune,
-                    label = "设置",
-                    onClick = { onTabSelected(3) }
-                )
+                // Slot 3: Center Elevated Coolapk Emerald Lens Button (+)
+                Box(
+                    modifier = Modifier.weight(1f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CoolapkElevatedAddButton(
+                        onClick = onAddClick
+                    )
+                }
+
+                // Slot 4: 资产
+                Box(
+                    modifier = Modifier.weight(1f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CoolTabItem(
+                        selected = currentTab == 2,
+                        icon = Icons.Default.AccountBalanceWallet,
+                        label = "资产",
+                        onClick = { onTabSelected(2) }
+                    )
+                }
+
+                // Slot 5: 设置
+                Box(
+                    modifier = Modifier.weight(1f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CoolTabItem(
+                        selected = currentTab == 3,
+                        icon = Icons.Default.Tune,
+                        label = "设置",
+                        onClick = { onTabSelected(3) }
+                    )
+                }
             }
         }
-
-        // Center Elevated Coolapk-Style Liquid Lens Action Button
-        CoolapkElevatedAddButton(
-            onClick = onAddClick,
-            modifier = Modifier.offset(y = (-8).dp)
-        )
     }
 }
 
@@ -141,9 +160,10 @@ private fun CoolTabItem(
 ) {
     val isDark = isSystemInDarkTheme()
     val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
 
-    val activeColor = if (isDark) Color(0xFF60A5FA) else LiquidGlassTokens.AccentBlue
-    val inactiveColor = if (isDark) Color(0xFF9CA3AF) else Color(0xFF8E8E93)
+    val activeColor = if (isDark) Color(0xFF34D399) else Color(0xFF00C853)
+    val inactiveColor = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)
 
     val contentColor by animateColorAsState(
         targetValue = if (selected) activeColor else inactiveColor,
@@ -151,32 +171,32 @@ private fun CoolTabItem(
         label = "contentColor"
     )
 
-    val scale by animateFloatAsState(
-        targetValue = if (selected) 1.06f else 1.0f,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
-        label = "tabScale"
+    val pressScale by animateFloatAsState(
+        targetValue = if (isPressed) 0.90f else 1.0f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
+        label = "pressScale"
     )
 
     Column(
         modifier = Modifier
+            .scale(pressScale)
             .clip(CircleShape)
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
                 onClick = onClick
             )
-            .scale(scale)
-            .padding(horizontal = 8.dp, vertical = 4.dp),
+            .padding(horizontal = 6.dp, vertical = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // Subtle indicator pill when active
+        // Icon container with soft tinted indicator pill when selected
         Box(
             modifier = Modifier
                 .clip(CircleShape)
                 .background(
                     if (selected) {
-                        if (isDark) Color(0x2660A5FA) else Color(0x18007AFF)
+                        if (isDark) Color(0x2634D399) else Color(0x1A00C853)
                     } else Color.Transparent
                 )
                 .padding(horizontal = 14.dp, vertical = 3.dp),
@@ -186,7 +206,7 @@ private fun CoolTabItem(
                 imageVector = icon,
                 contentDescription = label,
                 tint = contentColor,
-                modifier = Modifier.size(22.dp)
+                modifier = Modifier.size(23.dp)
             )
         }
 
@@ -194,19 +214,17 @@ private fun CoolTabItem(
 
         Text(
             text = label,
-            fontSize = 10.sp,
-            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+            fontSize = 10.5.sp,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
             color = contentColor
         )
     }
 }
 
 /**
- * True Coolapk/iQIYI Center Elevated Liquid Lens Button
- * Features:
- * - Convex glossy radial gradient (Emerald)
- * - Specular rim highlight & diffused colored drop shadow
- * - Interactive spring tactile bounce on click
+ * Center Elevated Coolapk-Style Liquid Lens Action Button.
+ * Replicates the emerald sphere in Coolapk with convex radial lighting,
+ * specular white sheen, and bouncy spring press tactile response.
  */
 @Composable
 private fun CoolapkElevatedAddButton(
@@ -217,7 +235,7 @@ private fun CoolapkElevatedAddButton(
     val isPressed by interactionSource.collectIsPressedAsState()
 
     val scale by animateFloatAsState(
-        targetValue = if (isPressed) 0.90f else 1.0f,
+        targetValue = if (isPressed) 0.88f else 1.0f,
         animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
         label = "buttonScale"
     )
@@ -225,31 +243,31 @@ private fun CoolapkElevatedAddButton(
     Box(
         modifier = modifier
             .scale(scale)
-            .size(56.dp)
+            .size(52.dp)
             .shadow(
-                elevation = 14.dp,
+                elevation = 12.dp,
                 shape = CircleShape,
-                ambientColor = Color(0x4000C853),
-                spotColor = Color(0x6000C853)
+                ambientColor = Color(0x3300C853),
+                spotColor = Color(0x5500C853)
             )
             .clip(CircleShape)
             .background(
                 Brush.radialGradient(
                     colors = listOf(
-                        Color(0xFF00E676), // Bright liquid center
-                        Color(0xFF00C853), // Rich emerald body
-                        Color(0xFF00963E)  // Darker lens perimeter
+                        Color(0xFF00E676), // Glowing highlight center
+                        Color(0xFF00C853), // Emerald body
+                        Color(0xFF00963E)  // Darker lens rim
                     ),
-                    radius = 80f
+                    radius = 70f
                 )
             )
             .border(
                 width = 1.2.dp,
                 brush = Brush.verticalGradient(
                     listOf(
-                        Color(0x99FFFFFF), // Top specular sheen
-                        Color(0x22FFFFFF),
-                        Color(0x40006428)  // Bottom depth rim
+                        Color(0x99FFFFFF), // Top specular reflection
+                        Color(0x25FFFFFF),
+                        Color(0x35005020)  // Bottom depth rim
                     )
                 ),
                 shape = CircleShape

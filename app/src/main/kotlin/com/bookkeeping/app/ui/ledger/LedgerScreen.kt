@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.sp
 import com.bookkeeping.app.data.local.entity.TransactionEntity
 import com.bookkeeping.app.data.local.entity.TransactionType
 import com.bookkeeping.app.data.local.model.TransactionWithDetails
+import com.bookkeeping.app.ui.backdrop.LiquidGlassSurface
 import com.bookkeeping.app.ui.common.FormatHelper
 import com.bookkeeping.app.ui.common.IconHelper
 import com.bookkeeping.app.ui.theme.LiquidGlassTokens
@@ -154,16 +155,13 @@ fun LedgerScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         // Hero Monthly Overview: Refined Apple-Style Liquid Glass Card
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .liquidGlass(
-                    shape = RoundedCornerShape(24.dp),
-                    elevation = 8.dp
-                )
-                .padding(20.dp)
+        LiquidGlassSurface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(24.dp),
+            elevation = 10.dp,
+            surfaceAlpha = 0.94f
         ) {
-            Column {
+            Column(modifier = Modifier.padding(20.dp)) {
                 Text(
                     text = "本月总支出 (元)",
                     fontSize = 13.sp,
