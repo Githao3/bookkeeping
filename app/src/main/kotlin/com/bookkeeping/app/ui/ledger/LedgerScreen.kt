@@ -1,6 +1,7 @@
 package com.bookkeeping.app.ui.ledger
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
@@ -25,6 +26,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ReceiptLong
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.DeleteOutline
@@ -82,6 +85,8 @@ fun LedgerScreen(
     var appliedEnd by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf<Long?>(null) }
     var showFilters by remember { mutableStateOf(false) }
     var dateError by remember { mutableStateOf<String?>(null) }
+    // "start" / "end"：当前正在通过日历弹窗选择的日期字段
+    var pickerTarget by remember { mutableStateOf<String?>(null) }
     fun dateValue(text: String): Long? {
         if (text.isBlank()) return null
         require(Regex("\\d{4}-\\d{2}-\\d{2}").matches(text)) { "日期格式为 yyyy-MM-dd" }
@@ -240,7 +245,18 @@ fun LedgerScreen(
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             GlassSearchField(query, { query = it }, Modifier.weight(1f), placeholder = "搜索账单")
-            GlassPillButton(label = "筛选 ${visible.size}", icon = Icons.Default.Tune, onClick = { showFilters = true })
+            // 徽标显示激活的筛选条件数（账户 / 分类 / 起止日期），未激活时不带数字
+            val activeFilters = listOfNotNull(
+                accountId,
+                categoryId,
+                if (appliedStart != null) Unit else null,
+                if (appliedEnd != null) Unit else null
+            ).size
+            GlassPillButton(
+                label = if (activeFilters > 0) "筛选 $activeFilters" else "筛选",
+                icon = Icons.Default.Tune,
+                onClick = { showFilters = true }
+            )
         }
         if (visible.isEmpty()) {
             Box(
@@ -349,8 +365,8 @@ fun LedgerScreen(
                     GlassChip(categoryId == c.id, c.name, { categoryId = c.id })
                 }
             }
-            GlassTextField(startDate, { startDate = it; dateError = null }, placeholder = "开始日期 yyyy-MM-dd（可空）")
-            GlassTextField(endDate, { endDate = it; dateError = null }, placeholder = "结束日期 yyyy-MM-dd（可空）")
+            DateFieldRow("开始日期", startDate, onPick = { pickerTarget = "start" }, onClear = { startDate = "" })
+            DateFieldRow("结束日期", endDate, onPick = { pickerTarget = "end" }, onClear = { endDate = "" })
             dateError?.let { Text(it, color = LiquidGlassTokens.ExpenseRed, fontSize = 13.sp) }
         }
     }, confirmButton = { GlassDialogAction("应用", onClick = {
@@ -363,6 +379,29 @@ fun LedgerScreen(
         }
         catch (e: Exception) { dateError = e.message ?: "日期无效" }
     }, emphasized = true) }, dismissButton = { GlassDialogAction("重置", onClick = { accountId = null; categoryId = null; startDate = ""; endDate = ""; appliedStart = null; appliedEnd = null; dateError = null; showFilters = false }) })
+    // 日期选择日历弹窗（点筛选里的日期行弹出）
+    pickerTarget?.let { target ->
+        val init = dateValue(if (target == "start") startDate else endDate)?.let { ms ->
+            Calendar.getInstance().apply { timeInMillis = ms }
+        }
+        CalendarPickerDialog(
+            title = if (target == "start") "选择开始日期" else "选择结束日期",
+            initial = init,
+            onDismiss = { pickerTarget = null },
+            onClear = {
+                if (target == "start") startDate = "" else endDate = ""
+                dateError = null
+            },
+            onPick = { y, m, d ->
+                val s = String.format(java.util.Locale.CHINA, "%04d-%02d-%02d", y, m, d)
+                if (target == "start") startDate = s else endDate = s
+                // 选完即时校验，避免等到点应用才报错
+                val a = dateValue(startDate); val b = dateValue(endDate)
+                dateError = if (a != null && b != null && a > b) "结束日期不能早于开始日期" else null
+                pickerTarget = null
+            }
+        )
+    }
     detail?.let { item ->
         GlassAlertDialog(onDismissRequest = { detail = null }, title = { Text("账单详情") },
             text = { Column(Modifier.verticalScroll(androidx.compose.foundation.rememberScrollState()), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -519,4 +558,175 @@ private fun ModernTransactionRow(
             color = amountColor
         )
     }
+}
+
+/**
+ * 筛选弹窗里的日期选择行：显示当前值（或占位提示），点击弹日历，已选时提供一键清除。
+ */
+@Composable
+private fun DateFieldRow(
+    label: String,
+    value: String,
+    onPick: () -> Unit,
+    onClear: () -> Unit
+) {
+    val isDark = isSystemInDarkTheme()
+    val ink = if (isDark) LiquidGlassTokens.TextPrimaryDark else LiquidGlassTokens.TextPrimaryLight
+    val ink2 = if (isDark) LiquidGlassTokens.TextSecondaryDark else LiquidGlassTokens.TextSecondaryLight
+    val accent = if (isDark) Color(0xFF34D399) else Color(0xFF00A844)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(com.bookkeeping.app.ui.components.insetTint())
+            .clickable(onClick = onPick)
+            .padding(horizontal = 14.dp, vertical = 10.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(label, fontSize = 11.sp, color = ink2)
+            Text(
+                value.ifBlank { "点击选择日期" },
+                fontSize = 15.sp,
+                fontWeight = if (value.isBlank()) FontWeight.Normal else FontWeight.SemiBold,
+                color = if (value.isBlank()) ink2 else ink
+            )
+        }
+        if (value.isNotBlank()) {
+            Icon(
+                Icons.Default.Close,
+                contentDescription = "清除$label",
+                tint = ink2,
+                modifier = Modifier
+                    .size(18.dp)
+                    .clickable(onClick = onClear)
+            )
+            Spacer(Modifier.width(10.dp))
+        }
+        Icon(Icons.Default.CalendarMonth, contentDescription = null, tint = accent, modifier = Modifier.size(18.dp))
+    }
+}
+
+/**
+ * 玻璃风格月历选择弹窗：支持按年 / 按月翻页，点选日期即回填。
+ * 网格固定 6 行，月份切换不跳动；选中日翡翠圆底，今日细描边。
+ */
+@Composable
+private fun CalendarPickerDialog(
+    title: String,
+    initial: Calendar?,
+    onDismiss: () -> Unit,
+    onClear: () -> Unit,
+    onPick: (Int, Int, Int) -> Unit
+) {
+    val isDark = isSystemInDarkTheme()
+    val ink = if (isDark) LiquidGlassTokens.TextPrimaryDark else LiquidGlassTokens.TextPrimaryLight
+    val ink2 = if (isDark) LiquidGlassTokens.TextSecondaryDark else LiquidGlassTokens.TextSecondaryLight
+    val accent = if (isDark) Color(0xFF34D399) else Color(0xFF00A844)
+    val today = remember { Calendar.getInstance() }
+    var sel by remember { mutableStateOf(initial) }
+    var shownYear by remember { mutableStateOf(initial?.get(Calendar.YEAR) ?: today.get(Calendar.YEAR)) }
+    var shownMonth by remember { mutableStateOf((initial?.get(Calendar.MONTH) ?: today.get(Calendar.MONTH)) + 1) }
+
+    fun shiftMonth(delta: Int) {
+        var m = shownMonth + delta
+        var y = shownYear
+        if (m < 1) { m = 12; y -= 1 }
+        if (m > 12) { m = 1; y += 1 }
+        shownYear = y; shownMonth = m
+    }
+
+    GlassAlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title) },
+        text = {
+            Column {
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("‹", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = ink2, modifier = Modifier
+                            .clip(CircleShape)
+                            .clickable { shownYear -= 1 }
+                            .padding(horizontal = 10.dp, vertical = 2.dp))
+                        Text("%d年".format(shownYear), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = ink, modifier = Modifier.padding(horizontal = 4.dp))
+                        Text("›", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = ink2, modifier = Modifier
+                            .clip(CircleShape)
+                            .clickable { shownYear += 1 }
+                            .padding(horizontal = 10.dp, vertical = 2.dp))
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.ChevronLeft, "上一月", tint = ink2, modifier = Modifier
+                            .clip(CircleShape)
+                            .clickable { shiftMonth(-1) }
+                            .padding(4.dp))
+                        Text("%d月".format(shownMonth), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = ink, modifier = Modifier.padding(horizontal = 4.dp))
+                        Icon(Icons.Default.ChevronRight, "下一月", tint = ink2, modifier = Modifier
+                            .clip(CircleShape)
+                            .clickable { shiftMonth(1) }
+                            .padding(4.dp))
+                    }
+                }
+                Spacer(Modifier.height(10.dp))
+                Row(Modifier.fillMaxWidth()) {
+                    listOf("一", "二", "三", "四", "五", "六", "日").forEach {
+                        Text(it, fontSize = 11.sp, color = ink2, textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.weight(1f))
+                    }
+                }
+                Spacer(Modifier.height(4.dp))
+                val first = remember(shownYear, shownMonth) {
+                    Calendar.getInstance().apply { clear(); set(shownYear, shownMonth - 1, 1) }
+                }
+                val leading = (first.get(Calendar.DAY_OF_WEEK) + 5) % 7
+                val daysInMonth = first.getActualMaximum(Calendar.DAY_OF_MONTH)
+                val cells: List<Int?> = List(leading) { null } + (1..daysInMonth).toList() + List((42 - leading - daysInMonth).coerceAtLeast(0)) { null }
+                cells.chunked(7).forEach { week ->
+                    Row(Modifier.fillMaxWidth()) {
+                        week.forEach { day ->
+                            Box(
+                                Modifier
+                                    .weight(1f)
+                                    .height(36.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (day != null) {
+                                    val isSelected = sel != null &&
+                                        sel!!.get(Calendar.YEAR) == shownYear &&
+                                        sel!!.get(Calendar.MONTH) + 1 == shownMonth &&
+                                        sel!!.get(Calendar.DAY_OF_MONTH) == day
+                                    val isToday = today.get(Calendar.YEAR) == shownYear &&
+                                        today.get(Calendar.MONTH) + 1 == shownMonth &&
+                                        today.get(Calendar.DAY_OF_MONTH) == day
+                                    Box(
+                                        Modifier
+                                            .size(30.dp)
+                                            .then(
+                                                if (isSelected) Modifier.background(accent, CircleShape)
+                                                else if (isToday) Modifier.border(1.dp, accent, CircleShape)
+                                                else Modifier
+                                            )
+                                            .clip(CircleShape)
+                                            .clickable { onPick(shownYear, shownMonth, day) },
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            day.toString(),
+                                            fontSize = 13.sp,
+                                            fontWeight = if (isSelected || isToday) FontWeight.SemiBold else FontWeight.Normal,
+                                            color = if (isSelected) Color.White else ink
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = { GlassDialogAction("清除", onClick = { onClear(); onDismiss() }) },
+        dismissButton = { GlassDialogAction("取消", onClick = onDismiss) }
+    )
 }
