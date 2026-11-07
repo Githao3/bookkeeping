@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 12+（API 31）系统强制启动画面：背景色对齐主界面画布 #F4F5F7，
+     消除「图标页 → 主页」切换时的白底闪变；API 31 以下无此机制，自动忽略。 -->
+<resources>
+
+    <style name="Theme.Bookkeeping" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowSplashScreenBackground">#F4F5F7</item>
+    </style>
+</resources>
