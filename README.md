@@ -97,7 +97,7 @@ RELEASE_KEY_PASSWORD=xxxx
 - [Kyant0/AndroidLiquidGlass](https://github.com/Kyant0/AndroidLiquidGlass) — AGSL 液态玻璃折射与色散着色器思路
 - [Jetpack Compose](https://developer.android.com/compose) / [Material 3](https://m3.material.io/) / [Room](https://developer.android.com/training/data-storage/room)
 - 设计灵感：酷安液态玻璃胶囊底栏、iCost / Moze 记一笔交互
-- 图标插画来自用户自备素材
+- 应用图标 3D 插画素材由项目作者提供
 
 ---
 
