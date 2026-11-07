@@ -2,6 +2,7 @@ package com.bookkeeping.app.data.local.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import androidx.room.Index
 
 enum class TransactionType {
     EXPENSE, // 支出
@@ -9,11 +10,11 @@ enum class TransactionType {
     TRANSFER // 转账
 }
 
-@Entity(tableName = "transactions")
+@Entity(tableName = "transactions", indices = [Index("timestamp"), Index("sourceAccountId"), Index("targetAccountId"), Index("categoryId")])
 data class TransactionEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
-    val amount: Double,
+    val amount: Long,
     val type: TransactionType,
     val categoryId: Long? = null,
     val sourceAccountId: Long,

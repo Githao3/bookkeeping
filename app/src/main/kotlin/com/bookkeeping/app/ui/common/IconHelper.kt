@@ -38,17 +38,17 @@ object IconHelper {
             "Laptop" -> Icons.Default.Laptop
             "TrendingUp" -> Icons.AutoMirrored.Filled.TrendingUp
             "AccountBalanceWallet" -> Icons.Default.AccountBalanceWallet
-            "Transfer" -> Icons.Default.SwapHoriz
+            "Transfer", "swap_horiz" -> Icons.Default.SwapHoriz
             else -> Icons.Default.MoreHoriz
         }
     }
 
     fun getAccountIcon(iconName: String): ImageVector {
         return when (iconName) {
-            "Wechat" -> Icons.Default.Payments
+            "Wechat", "payments" -> Icons.Default.Payments
             "Alipay" -> Icons.Default.AccountBalanceWallet
-            "BankCard" -> Icons.Default.CreditCard
-            "Cash" -> Icons.Default.AttachMoney
+            "BankCard", "credit_card" -> Icons.Default.CreditCard
+            "Cash", "attach_money" -> Icons.Default.AttachMoney
             else -> Icons.Default.AccountBalance
         }
     }

@@ -21,10 +21,10 @@ interface CategoryDao {
     @Query("SELECT * FROM categories WHERE id = :id LIMIT 1")
     suspend fun getCategoryById(id: Long): CategoryEntity?
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insert(category: CategoryEntity): Long
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertAll(categories: List<CategoryEntity>)
 
     @Update
@@ -32,4 +32,9 @@ interface CategoryDao {
 
     @Delete
     suspend fun delete(category: CategoryEntity)
+    @Query("SELECT * FROM categories ORDER BY id")
+    suspend fun snapshot(): List<CategoryEntity>
+
+    @Query("DELETE FROM categories")
+    suspend fun clear()
 }

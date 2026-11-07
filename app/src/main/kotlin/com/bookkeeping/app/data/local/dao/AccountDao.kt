@@ -17,10 +17,10 @@ interface AccountDao {
     @Query("SELECT * FROM accounts WHERE id = :id LIMIT 1")
     suspend fun getAccountById(id: Long): AccountEntity?
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insert(account: AccountEntity): Long
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertAll(accounts: List<AccountEntity>)
 
     @Update
@@ -30,5 +30,10 @@ interface AccountDao {
     suspend fun delete(account: AccountEntity)
 
     @Query("UPDATE accounts SET balance = balance + :delta WHERE id = :accountId")
-    suspend fun adjustBalance(accountId: Long, delta: Double)
+    suspend fun adjustBalance(accountId: Long, delta: Long)
+    @Query("SELECT * FROM accounts ORDER BY id")
+    suspend fun snapshot(): List<AccountEntity>
+
+    @Query("DELETE FROM accounts")
+    suspend fun clear()
 }

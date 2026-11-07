@@ -9,13 +9,13 @@ class FormatHelperTest {
 
     @Test
     fun testFormatCurrency() {
-        val result = FormatHelper.formatCurrency(1234.56)
+        val result = FormatHelper.formatCurrency(123456L)
         assertTrue(result.contains("1,234.56"))
     }
 
     @Test
     fun testFormatAmount() {
-        val result = FormatHelper.formatAmount(50.0)
+        val result = FormatHelper.formatAmount(5000L)
         assertEquals("50.00", result)
     }
 

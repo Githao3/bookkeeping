@@ -7,16 +7,13 @@ import java.util.Date
 import java.util.Locale
 
 object FormatHelper {
+    @androidx.compose.runtime.Composable
+    fun currency(amount: Long): String = if (LocalHideAmounts.current) "¥••••" else formatCurrency(amount)
+    val LocalHideAmounts = androidx.compose.runtime.staticCompositionLocalOf { false }
+    fun formatCurrency(amount: Long): String = currencyFormat.format(java.math.BigDecimal.valueOf(amount, 2))
+    fun formatAmount(amount: Long): String = amountOnlyFormat.format(java.math.BigDecimal.valueOf(amount, 2))
     private val currencyFormat = DecimalFormat("¥#,##0.00")
     private val amountOnlyFormat = DecimalFormat("#,##0.00")
-
-    fun formatCurrency(amount: Double): String {
-        return currencyFormat.format(amount)
-    }
-
-    fun formatAmount(amount: Double): String {
-        return amountOnlyFormat.format(amount)
-    }
 
     fun formatDayHeader(timestamp: Long): String {
         val cal = Calendar.getInstance().apply { timeInMillis = timestamp }

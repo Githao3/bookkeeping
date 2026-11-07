@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -23,8 +24,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ChevronLeft
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -47,14 +50,20 @@ import com.bookkeeping.app.data.local.entity.TransactionType
 import com.bookkeeping.app.data.local.model.TransactionWithDetails
 import com.bookkeeping.app.ui.common.FormatHelper
 import com.bookkeeping.app.ui.common.IconHelper
+import com.bookkeeping.app.ui.components.GlassAlertDialog
+import com.bookkeeping.app.ui.components.GlassCard
+import com.bookkeeping.app.ui.components.GlassDialogAction
+import com.bookkeeping.app.ui.components.GlassDivider
+import com.bookkeeping.app.ui.components.GlassIconButton
+import com.bookkeeping.app.ui.components.GlassProgressTrack
+import com.bookkeeping.app.ui.components.GlassSegmented
 import com.bookkeeping.app.ui.theme.LiquidGlassTokens
-import com.bookkeeping.app.ui.theme.liquidGlass
 
 data class CategoryStat(
     val categoryName: String,
     val iconName: String?,
     val colorHex: Long,
-    val amount: Double,
+    val amount: Long,
     val percentage: Float,
     val count: Int
 )
@@ -62,13 +71,22 @@ data class CategoryStat(
 @Composable
 fun StatsScreen(
     transactions: List<TransactionWithDetails>,
+    currentMonthTimestamp: Long,
+    onPreviousMonth: () -> Unit, onNextMonth: () -> Unit,
+    onPreviousYear: () -> Unit, onNextYear: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var selectedType by remember { mutableStateOf(TransactionType.EXPENSE) }
+    var range by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf("月") }
+    var selectedType by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(TransactionType.EXPENSE) }
     val isDark = isSystemInDarkTheme()
+    var detailCategory by remember { mutableStateOf<String?>(null) }
 
-    val filtered = remember(transactions, selectedType) {
-        transactions.filter { it.transaction.type == selectedType }
+    val filtered = remember(transactions, selectedType, range, currentMonthTimestamp) {
+        transactions.filter {
+            val selected = java.util.Calendar.getInstance().apply { timeInMillis = currentMonthTimestamp }
+            val date = java.util.Calendar.getInstance().apply { timeInMillis = it.transaction.timestamp }
+            it.transaction.type == selectedType && (range == "全部" || date.get(java.util.Calendar.YEAR) == selected.get(java.util.Calendar.YEAR) && (range == "年" || date.get(java.util.Calendar.MONTH) == selected.get(java.util.Calendar.MONTH)))
+        }
     }
 
     val totalAmount = remember(filtered) {
@@ -76,7 +94,7 @@ fun StatsScreen(
     }
 
     val categoryStats = remember(filtered, totalAmount) {
-        if (totalAmount <= 0.0) emptyList()
+        if (totalAmount <= 0) emptyList()
         else {
             filtered
                 .groupBy { it.category?.id ?: 0L }
@@ -88,7 +106,7 @@ fun StatsScreen(
                         iconName = first.category?.iconName,
                         colorHex = first.category?.colorHex ?: 0xFF9E9E9E,
                         amount = sum,
-                        percentage = (sum / totalAmount).toFloat(),
+                        percentage = (sum.toDouble() / totalAmount).toFloat(),
                         count = list.size
                     )
                 }
@@ -113,92 +131,72 @@ fun StatsScreen(
     ) {
         Spacer(modifier = Modifier.height(10.dp))
 
-        // Segmented Switcher: 支出统计 vs 收入统计
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(CircleShape)
-                .background(if (isDark) Color(0x33FFFFFF) else Color(0x0F000000))
-                .padding(4.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            val isExpense = selectedType == TransactionType.EXPENSE
-            val isIncome = selectedType == TransactionType.INCOME
-
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .clip(CircleShape)
-                    .background(
-                        if (isExpense) {
-                            if (isDark) Color(0x33F43F5E) else Color.White
-                        } else Color.Transparent
-                    )
-                    .clickable { selectedType = TransactionType.EXPENSE }
-                    .padding(vertical = 8.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "支出统计",
-                    fontSize = 14.sp,
-                    fontWeight = if (isExpense) FontWeight.Bold else FontWeight.Medium,
-                    color = if (isExpense) {
-                        if (isDark) Color(0xFFFB7185) else LiquidGlassTokens.ExpenseRed
-                    } else {
-                        if (isDark) LiquidGlassTokens.TextSecondaryDark else LiquidGlassTokens.TextSecondaryLight
-                    }
-                )
-            }
-
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .clip(CircleShape)
-                    .background(
-                        if (isIncome) {
-                            if (isDark) Color(0x3310B981) else Color.White
-                        } else Color.Transparent
-                    )
-                    .clickable { selectedType = TransactionType.INCOME }
-                    .padding(vertical = 8.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "收入统计",
-                    fontSize = 14.sp,
-                    fontWeight = if (isIncome) FontWeight.Bold else FontWeight.Medium,
-                    color = if (isIncome) {
-                        LiquidGlassTokens.IncomeGreen
-                    } else {
-                        if (isDark) LiquidGlassTokens.TextSecondaryDark else LiquidGlassTokens.TextSecondaryLight
-                    }
-                )
-            }
+        val rangeOptions = listOf("月", "年", "全部")
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            GlassIconButton(
+                Icons.Default.ChevronLeft, "上一期",
+                onClick = if (range == "年") onPreviousYear else onPreviousMonth,
+                enabled = range != "全部"
+            )
+            Text(
+                if (range == "全部") "全部时间" else if (range == "年") java.text.SimpleDateFormat("yyyy年", java.util.Locale.CHINA).format(java.util.Date(currentMonthTimestamp)) else FormatHelper.formatMonth(currentMonthTimestamp),
+                fontSize = 15.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = if (isDark) LiquidGlassTokens.TextPrimaryDark else LiquidGlassTokens.TextPrimaryLight
+            )
+            GlassIconButton(
+                Icons.Default.ChevronRight, "下一期",
+                onClick = if (range == "年") onNextYear else onNextMonth,
+                enabled = range != "全部"
+            )
         }
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // Range Segmented Control (iOS style, sliding pill)
+        GlassSegmented(
+            options = rangeOptions,
+            selectedIndex = rangeOptions.indexOf(range).coerceAtLeast(0),
+            onSelect = { range = rangeOptions[it] },
+            modifier = Modifier.width(216.dp)
+        )
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // Segmented Switcher: 支出统计 vs 收入统计
+        GlassSegmented(
+            options = listOf("支出统计", "收入统计"),
+            selectedIndex = if (selectedType == TransactionType.EXPENSE) 0 else 1,
+            onSelect = { selectedType = if (it == 0) TransactionType.EXPENSE else TransactionType.INCOME },
+            modifier = Modifier.fillMaxWidth(),
+            accentColor = if (selectedType == TransactionType.EXPENSE) LiquidGlassTokens.ExpenseRed else LiquidGlassTokens.IncomeGreen
+        )
 
         Spacer(modifier = Modifier.height(14.dp))
 
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(bottom = 110.dp)
+            contentPadding = PaddingValues(bottom = 116.dp)
         ) {
-            // Chart Card: Liquid Glass
+            // Chart Card: Flat Glass
             item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .liquidGlass(
-                            shape = RoundedCornerShape(24.dp),
-                            elevation = 8.dp
-                        )
-                        .padding(24.dp),
-                    contentAlignment = Alignment.Center
+                GlassCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(24.dp),
+                    elevation = 8.dp
                 ) {
-                    DonutChart(
-                        slices = chartSlices,
-                        totalAmount = totalAmount,
-                        centerTitle = if (selectedType == TransactionType.EXPENSE) "总支出" else "总收入"
-                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        DonutChart(
+                            slices = chartSlices,
+                            totalAmount = totalAmount,
+                            centerTitle = if (selectedType == TransactionType.EXPENSE) "总支出" else "总收入"
+                        )
+                    }
                 }
             }
 
@@ -230,25 +228,16 @@ fun StatsScreen(
                 }
             } else {
                 item {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .liquidGlass(
-                                shape = RoundedCornerShape(20.dp),
-                                elevation = 3.dp
-                            )
+                    GlassCard(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(20.dp),
+                        elevation = 4.dp
                     ) {
                         Column {
                             categoryStats.forEachIndexed { index, stat ->
-                                CategoryStatRow(stat = stat, index = index + 1)
+                                Box(Modifier.clickable { detailCategory = stat.categoryName }) { CategoryStatRow(stat = stat, index = index + 1) }
                                 if (index < categoryStats.size - 1) {
-                                    Spacer(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(start = 68.dp, end = 16.dp)
-                                            .height(0.6.dp)
-                                            .background(if (isDark) Color(0x1FFFFFFF) else Color(0x0A000000))
-                                    )
+                                    GlassDivider(startIndent = 68.dp, endIndent = 16.dp)
                                 }
                             }
                         }
@@ -256,6 +245,17 @@ fun StatsScreen(
                 }
             }
         }
+    }
+    detailCategory?.let { category ->
+        GlassAlertDialog(onDismissRequest = { detailCategory = null }, title = { Text("$category · 当前统计期间") },
+            text = { androidx.compose.foundation.lazy.LazyColumn(Modifier.heightIn(max = 360.dp)) {
+                itemsIndexed(filtered.filter { (it.category?.name ?: "未分类") == category }) { _, item ->
+                    Column(Modifier.padding(vertical = 8.dp)) {
+                        Text("${FormatHelper.formatDayHeader(item.transaction.timestamp)} ${FormatHelper.currency(item.transaction.amount)}")
+                        Text("${item.sourceAccount?.name.orEmpty()} · ${item.transaction.note}", fontSize = 13.sp)
+                    }
+                }
+            } }, confirmButton = { GlassDialogAction("关闭", onClick = { detailCategory = null }) })
     }
 }
 
@@ -300,7 +300,7 @@ private fun CategoryStatRow(stat: CategoryStat, index: Int) {
                     color = if (isDark) LiquidGlassTokens.TextPrimaryDark else LiquidGlassTokens.TextPrimaryLight
                 )
                 Text(
-                    text = FormatHelper.formatCurrency(stat.amount),
+                    text = FormatHelper.currency(stat.amount),
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
                     color = if (isDark) LiquidGlassTokens.TextPrimaryDark else LiquidGlassTokens.TextPrimaryLight
@@ -329,15 +329,9 @@ private fun CategoryStatRow(stat: CategoryStat, index: Int) {
 
             Spacer(modifier = Modifier.height(6.dp))
 
-            LinearProgressIndicator(
-                progress = { stat.percentage },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(4.dp)
-                    .clip(CircleShape),
-                color = baseColor,
-                trackColor = if (isDark) Color(0x1FFFFFFF) else Color(0x0F000000),
-                strokeCap = StrokeCap.Round
+            GlassProgressTrack(
+                progress = stat.percentage,
+                color = baseColor
             )
         }
     }
@@ -348,7 +342,7 @@ data class ChartSlice(val color: Color, val percentage: Float)
 @Composable
 fun DonutChart(
     slices: List<ChartSlice>,
-    totalAmount: Double,
+    totalAmount: Long,
     centerTitle: String,
     modifier: Modifier = Modifier
 ) {
@@ -361,11 +355,11 @@ fun DonutChart(
     }
 
     Box(
-        modifier = modifier.size(200.dp),
+        modifier = modifier.size(160.dp),
         contentAlignment = Alignment.Center
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
-            val strokeWidth = 26.dp.toPx()
+            val strokeWidth = 18.dp.toPx()
             val diameter = size.minDimension - strokeWidth
             val arcSize = Size(diameter, diameter)
             val topLeft = Offset(strokeWidth / 2f, strokeWidth / 2f)
@@ -409,7 +403,7 @@ fun DonutChart(
             )
             Spacer(modifier = Modifier.height(2.dp))
             Text(
-                text = FormatHelper.formatCurrency(totalAmount),
+                text = FormatHelper.currency(totalAmount),
                 fontSize = 19.sp,
                 fontWeight = FontWeight.Bold,
                 color = if (isDark) LiquidGlassTokens.TextPrimaryDark else LiquidGlassTokens.TextPrimaryLight

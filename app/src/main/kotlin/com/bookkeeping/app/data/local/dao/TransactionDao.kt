@@ -25,10 +25,10 @@ interface TransactionDao {
     @Query("SELECT * FROM transactions WHERE id = :id LIMIT 1")
     suspend fun getTransactionById(id: Long): TransactionEntity?
 
-    @Query("SELECT COALESCE(SUM(amount), 0.0) FROM transactions WHERE type = :type AND timestamp >= :startTime AND timestamp <= :endTime")
-    fun getTotalAmountByTypeBetweenFlow(type: TransactionType, startTime: Long, endTime: Long): Flow<Double>
+    @Query("SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE type = :type AND timestamp >= :startTime AND timestamp <= :endTime")
+    fun getTotalAmountByTypeBetweenFlow(type: TransactionType, startTime: Long, endTime: Long): Flow<Long>
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insert(transaction: TransactionEntity): Long
 
     @Update
@@ -39,4 +39,11 @@ interface TransactionDao {
 
     @Query("DELETE FROM transactions WHERE id = :id")
     suspend fun deleteById(id: Long)
+    @Query("SELECT * FROM transactions ORDER BY id")
+    suspend fun snapshot(): List<TransactionEntity>
+
+    @Query("DELETE FROM transactions")
+    suspend fun clear()
+    @Query("SELECT COUNT(*) FROM transactions WHERE sourceAccountId = :id OR targetAccountId = :id")
+    suspend fun accountUsage(id: Long): Int
 }

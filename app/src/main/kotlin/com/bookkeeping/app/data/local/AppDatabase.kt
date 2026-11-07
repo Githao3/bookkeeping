@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.bookkeeping.app.data.local.dao.AccountDao
 import com.bookkeeping.app.data.local.dao.CategoryDao
@@ -23,8 +24,8 @@ import kotlinx.coroutines.launch
         CategoryEntity::class,
         AccountEntity::class
     ],
-    version = 1,
-    exportSchema = false
+    version = 2,
+    exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun transactionDao(): TransactionDao
@@ -32,6 +33,35 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun accountDao(): AccountDao
 
     companion object {
+        val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // Exact local pre-migration snapshot, including legacy floating point values.
+                db.execSQL("CREATE TABLE IF NOT EXISTS migration_v1_accounts AS SELECT * FROM accounts")
+                db.execSQL("CREATE TABLE IF NOT EXISTS migration_v1_categories AS SELECT * FROM categories")
+                db.execSQL("CREATE TABLE IF NOT EXISTS migration_v1_transactions AS SELECT * FROM transactions")
+                db.execSQL("ALTER TABLE accounts RENAME TO accounts_v1")
+                db.execSQL("CREATE TABLE accounts (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, name TEXT NOT NULL, type TEXT NOT NULL, balance INTEGER NOT NULL, iconName TEXT NOT NULL, colorHex INTEGER NOT NULL, isIncludedInTotal INTEGER NOT NULL, isArchived INTEGER NOT NULL)")
+                db.query("SELECT * FROM accounts_v1").use { cursor ->
+                    while (cursor.moveToNext()) db.execSQL("INSERT INTO accounts VALUES(?,?,?,?,?,?,?,?)", arrayOf<Any?>(
+                        cursor.getLong(0), cursor.getString(1), cursor.getString(2),
+                        com.bookkeeping.app.data.Money.legacy(cursor.getDouble(3)), cursor.getString(4), cursor.getLong(5), cursor.getInt(6), 0))
+                }
+                db.execSQL("DROP TABLE accounts_v1")
+                db.execSQL("ALTER TABLE transactions RENAME TO transactions_v1")
+                db.execSQL("CREATE TABLE transactions (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, amount INTEGER NOT NULL, type TEXT NOT NULL, categoryId INTEGER, sourceAccountId INTEGER NOT NULL, targetAccountId INTEGER, timestamp INTEGER NOT NULL, note TEXT NOT NULL)")
+                db.query("SELECT * FROM transactions_v1").use { cursor ->
+                    while (cursor.moveToNext()) db.execSQL("INSERT INTO transactions VALUES(?,?,?,?,?,?,?,?)", arrayOf<Any?>(
+                        cursor.getLong(0), com.bookkeeping.app.data.Money.legacy(cursor.getDouble(1)), cursor.getString(2),
+                        if (cursor.isNull(3)) null else cursor.getLong(3), cursor.getLong(4),
+                        if (cursor.isNull(5)) null else cursor.getLong(5), cursor.getLong(6), cursor.getString(7)))
+                }
+                db.execSQL("DROP TABLE transactions_v1")
+                listOf("timestamp", "sourceAccountId", "targetAccountId", "categoryId").forEach { column ->
+                    db.execSQL("CREATE INDEX index_transactions_$column ON transactions ($column)")
+                }
+            }
+        }
+
         @Volatile
         private var INSTANCE: AppDatabase? = null
 
@@ -42,6 +72,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "bookkeeping_database"
                 )
+                    .addMigrations(MIGRATION_1_2)
                     .addCallback(DatabaseCallback(scope))
                     .build()
                 INSTANCE = instance
@@ -67,10 +98,10 @@ abstract class AppDatabase : RoomDatabase() {
 
                 // Default Accounts
                 val defaultAccounts = listOf(
-                    AccountEntity(name = "微信零钱", type = AccountType.WECHAT, balance = 1500.0, iconName = "Wechat", colorHex = 0xFF07C160),
-                    AccountEntity(name = "支付宝", type = AccountType.ALIPAY, balance = 2800.0, iconName = "Alipay", colorHex = 0xFF1677FF),
-                    AccountEntity(name = "招商银行储蓄卡", type = AccountType.BANK_CARD, balance = 12500.0, iconName = "BankCard", colorHex = 0xFFE53935),
-                    AccountEntity(name = "现金钱包", type = AccountType.CASH, balance = 300.0, iconName = "Cash", colorHex = 0xFFFFB300)
+                    AccountEntity(name = "微信零钱", type = AccountType.WECHAT, balance = 0, iconName = "Wechat", colorHex = 0xFF07C160),
+                    AccountEntity(name = "支付宝", type = AccountType.ALIPAY, balance = 0, iconName = "Alipay", colorHex = 0xFF1677FF),
+                    AccountEntity(name = "招商银行储蓄卡", type = AccountType.BANK_CARD, balance = 0, iconName = "BankCard", colorHex = 0xFFE53935),
+                    AccountEntity(name = "现金钱包", type = AccountType.CASH, balance = 0, iconName = "Cash", colorHex = 0xFFFFB300)
                 )
                 accountDao.insertAll(defaultAccounts)
 

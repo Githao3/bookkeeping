@@ -25,6 +25,22 @@ object LiquidGlassTokens {
     val GlassContainerLight = Color(0xE6FFFFFF)
     val GlassContainerDark = Color(0xCC16181D)
 
+    // Flat glass panel fill (LiquidBottomBar shell standard)
+    val GlassPanelDark = Color(0xFF1E2430)
+    val GlassPanelLight = Color(0xFFFFFFFF)
+
+    // Inset track tints (search fields, segmented tracks, icon-less wells)
+    val InsetLight = Color(0x0F000000)
+    val InsetDark = Color(0x33FFFFFF)
+
+    // Pill indicator fills (segmented selection / chips)
+    val PillLight = Color(0xFFE8EAEE)
+    val PillDark = Color(0xFF2C3340)
+
+    // Pill border hairlines (brighter than card borders for on-pill specular)
+    val PillBorderLight = Color(0x30FFFFFF)
+    val PillBorderDark = Color(0x1AFFFFFF)
+
     // Primary Accents
     val AccentBlue = Color(0xFF007AFF)       // iOS System Blue
     val AccentEmerald = Color(0xFF00C853)    // Coolapk Emerald Green

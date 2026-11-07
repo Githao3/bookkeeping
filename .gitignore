@@ -15,3 +15,12 @@
 local.properties
 .agents/
 .taste-skill/
+docs/screenshots/
+.zcode/
+
+# Release signing keystore — never commit
+/keystore/
+*.jks
+*.keystore
+
+__pycache__/

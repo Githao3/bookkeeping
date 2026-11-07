@@ -18,8 +18,9 @@ data class AccountEntity(
     val id: Long = 0,
     val name: String,
     val type: AccountType,
-    val balance: Double = 0.0,
+    val balance: Long = 0,
     val iconName: String = "AccountBalanceWallet",
     val colorHex: Long = 0xFF4CAF50,
-    val isIncludedInTotal: Boolean = true
+    val isIncludedInTotal: Boolean = true,
+    val isArchived: Boolean = false
 )

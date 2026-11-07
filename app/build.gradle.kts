@@ -1,8 +1,16 @@
+import java.util.Properties
+
 plugins {
   alias(libs.plugins.android.application)
   alias(libs.plugins.compose.compiler)
   alias(libs.plugins.kotlin.serialization)
   alias(libs.plugins.ksp)
+}
+
+// 发布签名参数读取自 local.properties（不入 git；缺失时退回 debug 签名，保证 CI/他人克隆可构建）
+val keystoreProperties = Properties().apply {
+  val f = rootProject.file("local.properties")
+  if (f.exists()) f.inputStream().use { load(it) }
 }
 
 android {
@@ -13,13 +21,28 @@ android {
     minSdk = 24
     targetSdk = 37
     versionCode = 1
-    versionName = "1.0"
+    versionName = "1.0.0"
+    testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+  }
+
+  signingConfigs {
+    if (keystoreProperties["RELEASE_STORE_FILE"] != null) {
+      create("release") {
+        storeFile = rootProject.file(keystoreProperties["RELEASE_STORE_FILE"] as String)
+        storePassword = keystoreProperties["RELEASE_STORE_PASSWORD"] as String
+        keyAlias = keystoreProperties["RELEASE_KEY_ALIAS"] as String
+        keyPassword = keystoreProperties["RELEASE_KEY_PASSWORD"] as String
+      }
+    }
   }
 
   buildTypes {
     release {
       isMinifyEnabled = false
       proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+      if (keystoreProperties["RELEASE_STORE_FILE"] != null) {
+        signingConfig = signingConfigs.getByName("release")
+      }
     }
   }
   compileOptions {
@@ -29,9 +52,10 @@ android {
   buildFeatures {
     compose = true
     aidl = false
-    buildConfig = false
+    buildConfig = true
     shaders = false
   }
+  sourceSets.getByName("androidTest").assets.directories.add("$projectDir/schemas")
 
   packaging {
     resources {
@@ -42,6 +66,10 @@ android {
 
 kotlin {
   // Use default daemon toolchain
+}
+
+ksp {
+  arg("room.schemaLocation", "$projectDir/schemas")
 }
 
 dependencies {
