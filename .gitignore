@@ -18,6 +18,9 @@ local.properties
 docs/screenshots/
 .zcode/
 
+# CodeBuddy 项目级配置：skills 为 .agents/skills 的目录链接，不入库
+/.codebuddy/
+
 # Release signing keystore — never commit
 /keystore/
 *.jks

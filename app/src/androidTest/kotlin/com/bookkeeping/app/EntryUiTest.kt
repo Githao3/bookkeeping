@@ -52,15 +52,13 @@ class EntryUiTest {
         render(); compose.onNodeWithText("1").performClick(); compose.onNodeWithText("+").performClick(); compose.onNodeWithText("完成").performClick()
         compose.onNodeWithText("请补全金额表达式").assertIsDisplayed(); compose.runOnIdle { assertNull(saved) }
     }
-    @Test fun noteAndSaveRemainUsableInKeyboardSizedViewport() {
+    @Test fun noteImeDoneSavesAmountAndNote() {
         render(fontScale=1.3f)
         compose.onNodeWithText("1").performClick()
         compose.onNode(hasSetTextAction()).performScrollTo().performClick().performTextInput("键盘测试备注")
-        // A real IME reduces available height after focus, when the amount keypad
-        // has already been replaced by the compact save row.
+        // 备注聚焦后数字键盘让位给系统输入法，输入法上的「完成」动作直接保存
         compose.runOnIdle { viewportHeight = 340 }
-        compose.onNodeWithText("金额键盘").assertIsDisplayed()
-        compose.onNodeWithText("保存").assertIsDisplayed().performClick()
+        compose.onNode(hasSetTextAction()).performImeAction()
         compose.runOnIdle { assertEquals("键盘测试备注",saved!!.note); assertEquals(100L,saved!!.amount) }
     }
 }

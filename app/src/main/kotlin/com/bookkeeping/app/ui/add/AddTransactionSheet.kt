@@ -36,6 +36,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalanceWallet
@@ -75,6 +77,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -345,6 +348,9 @@ fun AddTransactionContent(accounts: List<AccountEntity>, expenseCategories: List
                 enabled = !saving,
                 textStyle = noteStyle,
                 cursorBrush = SolidColor(accent),
+                // 输入法动作键 =「完成」并直接保存：输完备注无需切回数字键盘（代价是备注不再支持手动换行）
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(onDone = { complete() }),
                 modifier = Modifier
                     .fillMaxWidth()
                     .onFocusChanged {
@@ -369,7 +375,7 @@ fun AddTransactionContent(accounts: List<AccountEntity>, expenseCategories: List
             Text(error, color = LiquidGlassTokens.ExpenseRed, fontSize = 12.sp, modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp))
         }
 
-        // 底部：备注聚焦时交给系统输入法（不渲染数字键盘），点金额数字即可切回
+        // 底部：备注聚焦时交给系统输入法（不渲染数字键盘），输入法「完成」直接保存，点金额数字即可切回
         if (!noteFocused) {
             NumberPad(
                 onDigitClick = { onDraftChange(draft.copy(amount = Money.key(draft.amount, it))); inputError = null },

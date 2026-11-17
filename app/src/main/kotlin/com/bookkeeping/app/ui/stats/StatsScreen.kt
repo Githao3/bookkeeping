@@ -1,10 +1,13 @@
 package com.bookkeeping.app.ui.stats
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,6 +23,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
@@ -41,9 +45,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bookkeeping.app.data.local.entity.TransactionType
@@ -58,6 +66,10 @@ import com.bookkeeping.app.ui.components.GlassIconButton
 import com.bookkeeping.app.ui.components.GlassProgressTrack
 import com.bookkeeping.app.ui.components.GlassSegmented
 import com.bookkeeping.app.ui.theme.LiquidGlassTokens
+import kotlin.math.PI
+import kotlin.math.abs
+import kotlin.math.atan2
+import kotlin.math.hypot
 
 data class CategoryStat(
     val categoryName: String,
@@ -114,11 +126,15 @@ fun StatsScreen(
         }
     }
 
-    val chartSlices = remember(categoryStats) {
-        categoryStats.map {
+    // 相邻撞色自动错开后的展示色：圆盘图与排行榜共用同一份，保证两处颜色一致
+    val displayColors = remember(categoryStats) { distinctAdjacentColors(categoryStats.map { Color(it.colorHex) }) }
+    val chartSlices = remember(categoryStats, displayColors) {
+        categoryStats.mapIndexed { index, stat ->
             ChartSlice(
-                color = Color(it.colorHex),
-                percentage = it.percentage
+                name = stat.categoryName,
+                amount = stat.amount,
+                color = displayColors[index],
+                percentage = stat.percentage
             )
         }
     }
@@ -235,7 +251,7 @@ fun StatsScreen(
                     ) {
                         Column {
                             categoryStats.forEachIndexed { index, stat ->
-                                Box(Modifier.clickable { detailCategory = stat.categoryName }) { CategoryStatRow(stat = stat, index = index + 1) }
+                                Box(Modifier.clickable { detailCategory = stat.categoryName }) { CategoryStatRow(stat = stat, index = index + 1, displayColor = displayColors[index]) }
                                 if (index < categoryStats.size - 1) {
                                     GlassDivider(startIndent = 68.dp, endIndent = 16.dp)
                                 }
@@ -260,9 +276,9 @@ fun StatsScreen(
 }
 
 @Composable
-private fun CategoryStatRow(stat: CategoryStat, index: Int) {
+private fun CategoryStatRow(stat: CategoryStat, index: Int, displayColor: Color) {
     val isDark = isSystemInDarkTheme()
-    val baseColor = Color(stat.colorHex)
+    val baseColor = displayColor
 
     Row(
         modifier = Modifier
@@ -337,8 +353,32 @@ private fun CategoryStatRow(stat: CategoryStat, index: Int) {
     }
 }
 
-data class ChartSlice(val color: Color, val percentage: Float)
+data class ChartSlice(val name: String, val amount: Long, val color: Color, val percentage: Float)
 
+/** 相邻撞色自动错开：环形分段按金额排序逐段检查与前一段的色相差，过近则旋转色相（明度/饱和度不变）；
+ *  首尾闭环同样检查。圆盘图与排行榜共用同一份结果，保证两处颜色一致，不动数据库中的分类本色。 */
+private fun distinctAdjacentColors(colors: List<Color>): List<Color> {
+    if (colors.size < 2) return colors
+    val out = ArrayList(colors)
+    fun hsvOf(c: Color) = FloatArray(3).also { android.graphics.Color.colorToHSV(c.toArgb(), it) }
+    fun hue(c: Color) = hsvOf(c)[0]
+    fun rotate(c: Color, delta: Float): Color {
+        val hsv = hsvOf(c)
+        hsv[0] = (hsv[0] + delta) % 360f
+        return Color(android.graphics.Color.HSVToColor(hsv))
+    }
+    fun hueDist(a: Float, b: Float): Float { val d = abs(a - b); return minOf(d, 360f - d) }
+    for (i in 1 until out.size) {
+        if (hueDist(hue(out[i]), hue(out[i - 1])) < 25f) out[i] = rotate(out[i], 45f)
+    }
+    if (out.size > 2 && hueDist(hue(out.last()), hue(out.first())) < 25f) {
+        out[out.lastIndex] = rotate(out.last(), -45f)
+    }
+    return out
+}
+
+/** 玻璃圆盘图：平头分段环图（方切口 + 固定小间隙，对标 token 用量环图风格）；点击扇区高亮（其余淡化、选中段加粗）并联动中心显示该分类 名称/金额/占比。
+ *  全段统一 Stroke 默认平头笔帽，无圆头延伸问题；仅单一分类时无间隙成整环。 */
 @Composable
 fun DonutChart(
     slices: List<ChartSlice>,
@@ -347,7 +387,12 @@ fun DonutChart(
     modifier: Modifier = Modifier
 ) {
     val isDark = isSystemInDarkTheme()
+    val haptic = LocalHapticFeedback.current
     val progress = remember { Animatable(0f) }
+    // 选中扇区（数据变化时自动重置）；再次点击同一扇区或点击环带外取消
+    var selected by remember(slices) { mutableStateOf<Int?>(null) }
+    val dimAlpha by animateFloatAsState(if (selected == null) 1f else 0.35f, label = "donutDim")
+    val popWidth by animateDpAsState(if (selected == null) 0.dp else 6.dp, label = "donutPop")
 
     LaunchedEffect(slices, totalAmount) {
         progress.snapTo(0f)
@@ -355,14 +400,46 @@ fun DonutChart(
     }
 
     Box(
-        modifier = modifier.size(160.dp),
+        modifier = modifier.size(180.dp),
         contentAlignment = Alignment.Center
     ) {
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            val strokeWidth = 18.dp.toPx()
-            val diameter = size.minDimension - strokeWidth
+        Canvas(
+            modifier = Modifier
+                .fillMaxSize()
+                .pointerInput(slices) {
+                    detectTapGestures { pos ->
+                        val stroke = 22.dp.toPx()
+                        val pop = popWidth.toPx()
+                        val band = (stroke + pop) / 2f
+                        val center = Offset(size.width / 2f, size.height / 2f)
+                        val radius = (minOf(size.width, size.height).toFloat() - stroke - pop) / 2f
+                        val d = hypot((pos.x - center.x).toDouble(), (pos.y - center.y).toDouble())
+                        if (d < radius - band || d > radius + band) {
+                            if (selected != null) selected = null
+                        } else {
+                            // 0° = 顶部（-90°），顺时针增长，与 drawArc 的起始角约定同源
+                            val deg = (atan2((pos.y - center.y).toDouble(), (pos.x - center.x).toDouble()) * 180 / PI + 450.0) % 360.0
+                            var acc = 0f
+                            var hit: Int? = null
+                            slices.forEachIndexed { index, slice ->
+                                val end = acc + slice.percentage * 360f
+                                if (deg >= acc && deg < end) hit = index
+                                acc = end
+                            }
+                            val next = if (hit == selected) null else hit
+                            if (next != selected) haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            selected = next
+                        }
+                    }
+                }
+        ) {
+            val stroke = 22.dp.toPx()
+            val pop = popWidth.toPx()
+            val band = (stroke + pop) / 2f
+            val diameter = size.minDimension - stroke - pop
             val arcSize = Size(diameter, diameter)
-            val topLeft = Offset(strokeWidth / 2f, strokeWidth / 2f)
+            val topLeft = Offset(band, band)
+            val radius = diameter / 2f
 
             if (slices.isEmpty()) {
                 drawArc(
@@ -372,21 +449,26 @@ fun DonutChart(
                     useCenter = false,
                     topLeft = topLeft,
                     size = arcSize,
-                    style = Stroke(width = strokeWidth)
+                    style = Stroke(width = stroke)
                 )
             } else {
+                // 平头分段（对标 token 用量环图）：方切口 + 固定小间隙；仅一段时无间隙成整环
+                val gapDeg = if (slices.size == 1) 0f else 1f
                 var currentAngle = -90f
-                slices.forEach { slice ->
+                slices.forEachIndexed { index, slice ->
                     val sweep = slice.percentage * 360f * progress.value
                     if (sweep > 0f) {
+                        val isSelected = selected == index
+                        val width = if (isSelected) stroke + pop else stroke
+                        val color = if (selected != null && !isSelected) slice.color.copy(alpha = dimAlpha) else slice.color
                         drawArc(
-                            color = slice.color,
-                            startAngle = currentAngle,
-                            sweepAngle = sweep - 1.5f, // subtle gap
+                            color = color,
+                            startAngle = currentAngle + gapDeg / 2,
+                            sweepAngle = (sweep - gapDeg).coerceAtLeast(0.5f),
                             useCenter = false,
                             topLeft = topLeft,
                             size = arcSize,
-                            style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
+                            style = Stroke(width = width)
                         )
                         currentAngle += sweep
                     }
@@ -394,20 +476,48 @@ fun DonutChart(
             }
         }
 
+        // 中心：默认显示 总支出/总收入 + 合计；选中扇区后切换为该分类 名称/金额/占比
+        val sel = selected?.let { slices.getOrNull(it) }
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = centerTitle,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium,
-                color = if (isDark) LiquidGlassTokens.TextSecondaryDark else LiquidGlassTokens.TextSecondaryLight
-            )
-            Spacer(modifier = Modifier.height(2.dp))
-            Text(
-                text = FormatHelper.currency(totalAmount),
-                fontSize = 19.sp,
-                fontWeight = FontWeight.Bold,
-                color = if (isDark) LiquidGlassTokens.TextPrimaryDark else LiquidGlassTokens.TextPrimaryLight
-            )
+            if (sel == null) {
+                Text(
+                    text = centerTitle,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = if (isDark) LiquidGlassTokens.TextSecondaryDark else LiquidGlassTokens.TextSecondaryLight
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = FormatHelper.currency(totalAmount),
+                    fontSize = 19.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = if (isDark) LiquidGlassTokens.TextPrimaryDark else LiquidGlassTokens.TextPrimaryLight
+                )
+            } else {
+                Text(
+                    text = sel.name,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = if (isDark) LiquidGlassTokens.TextSecondaryDark else LiquidGlassTokens.TextSecondaryLight,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.widthIn(max = 108.dp)
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = FormatHelper.currency(sel.amount),
+                    fontSize = 19.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = if (isDark) LiquidGlassTokens.TextPrimaryDark else LiquidGlassTokens.TextPrimaryLight
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = "${(sel.percentage * 100).toInt()}%",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = sel.color
+                )
+            }
         }
     }
 }
